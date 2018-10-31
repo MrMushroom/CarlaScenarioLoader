@@ -24,9 +24,9 @@ def main():
   elif len(sys.argv) == 3:
     if os.path.isfile(sys.argv[2]):
       # create TestControl class
-      testControl = TestControl()
+      testControl = TestControl(sys.argv[1])
       # try to load Config
-      if not testControl.setupTestWithConfig(sys.argv[1], sys.argv[2]):
+      if not testControl.setupTestWithConfig(sys.argv[2]):
         print "[Error] TestControl-Setup failed"
         exit()
       testControl.startSimulation()
