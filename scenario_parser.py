@@ -5,9 +5,11 @@
 # This work is licensed under the terms of the MIT license.
 # For a copy, see <https://opensource.org/licenses/MIT>.
 
+import abc
 import xmlschema
 
 from support.singleton import Singleton
+from support.actor import CarlaActor
 
 class ScenarioParser:
   __metaclass__ = Singleton
@@ -21,6 +23,7 @@ class ScenarioParser:
     self.__actors = []
     self.__simTimeEvents = []
     self.__stateEvents = []
+    self.__sceneDescription = None
 
   def parseScenarioXML(self, scenarioDescriptionFilePath):
     try:
@@ -48,7 +51,36 @@ class ScenarioParser:
   def getStateEvents(self):
     return self.__stateEvents
 
+  def getSceneDescription(self):
+    return self.__sceneDescription
+
+  @abc.abstractmethod
   def processActors(self):
+    pass
+
+  @abc.abstractmethod
+  def processEntityEvents(self):
+    pass
+
+  @abc.abstractmethod
+  def processSimTimeEvents(self):
+    pass
+
+  @abc.abstractmethod
+  def processStateEvents(self):
+    pass
+
+  @abc.abstractmethod
+  def processSceneDescription(self):
+    pass
+  
+
+class OpenScenarioParser(ScenarioParser):
+  def __init__(self):
+    ScenarioParser.__init__(self, "schema/OpenSCENARIO_v0.9.1.xsd")
+    print "[INFO] loaded schema/OpenSCENARIO_v0.9.1.xsd into ScenarioParser"
+
+  def processActors(self):    
     raise NotImplementedError("implement processActors")
 
   def processEntityEvents(self):
@@ -59,9 +91,6 @@ class ScenarioParser:
 
   def processStateEvents(self):
     raise NotImplementedError("implement processStateEvents")
-  
 
-class OpenScenarioParser(ScenarioParser):
-  def __init__(self):
-    ScenarioParser.__init__(self, "schema/OpenSCENARIO_v0.9.1.xsd")
-    print "[INFO] loaded schema/OpenSCENARIO_v0.9.1.xsd into ScenarioParser"
+  def processSceneDescription(self):
+    raise NotImplementedError("implement processSceneDescription")

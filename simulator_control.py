@@ -5,6 +5,8 @@
 # This work is licensed under the terms of the MIT license.
 # For a copy, see <https://opensource.org/licenses/MIT>.
 
+import abc
+
 from support.singleton import Singleton
 
 class SimulatorControl:
@@ -22,6 +24,27 @@ class SimulatorControl:
   def getIsRunning(self):
     raise NotImplementedError("implement getIsRunning")
 
+  @abc.abstractmethod
+  def connect(self):
+    pass
+
+  @abc.abstractmethod
+  def disconnect(self):
+    pass
+
+  @abc.abstractmethod
+  def loadScene(self, sceneDescription):
+    pass
+
+  @abc.abstractmethod
+  def run(self):
+    pass
+
+
+class CarlaSimulatorControl(SimulatorControl):
+  def __init__(self):
+    SimulatorControl.__init__(self, "Carla")
+
   def connect(self):
     raise NotImplementedError("implement connect")
 
@@ -33,8 +56,3 @@ class SimulatorControl:
 
   def run(self):
     raise NotImplementedError("implement run")
-
-
-class CarlaSimulatorControl(SimulatorControl):
-  def __init__(self):
-    SimulatorControl.__init__(self, "Carla")
