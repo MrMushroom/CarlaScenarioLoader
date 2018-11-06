@@ -9,24 +9,25 @@ from threading import Lock
 
 from support.singleton import Singleton
 
+
 class TimedEventHandler:
-  __metaclass__ = Singleton
+    __metaclass__ = Singleton
 
-  def __init__(self):
-    self.__currentSimTime = None
-    self.__events = None
-    self.__syncLock = Lock()
-  
-  def updateSimStep(self, newSimTime):
-    self.__syncLock.acquire()
-    self.__currentSimTime = newSimTime
-    self.__syncLock.release()
+    def __init__(self):
+        self.__currentSimTime = None
+        self.__events = None
+        self.__syncLock = Lock()
 
-  def subscribe(self, name, updateMethod):
-    raise NotImplementedError("implement subscribe")
+    def updateSimStep(self, newSimTime):
+        self.__syncLock.acquire()
+        self.__currentSimTime = newSimTime
+        self.__syncLock.release()
 
-  def unsubscribe(self, name):
-    raise NotImplementedError("implement unsubscribe")
+    def subscribe(self, name, updateMethod):
+        raise NotImplementedError("implement subscribe")
 
-  def notify(self):
-    raise NotImplementedError("implement notify")
+    def unsubscribe(self, name):
+        raise NotImplementedError("implement unsubscribe")
+
+    def notify(self):
+        raise NotImplementedError("implement notify")

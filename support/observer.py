@@ -7,9 +7,10 @@
 
 import abc
 
-class IObserver():
-  __metaclass__ = abc.ABCMeta
 
-  @abc.abstractmethod
-  def update(self, event):
-    pass
+class IObserver():
+    __metaclass__ = abc.ABCMeta
+
+    @abc.abstractmethod
+    def update(self, event):
+        pass
