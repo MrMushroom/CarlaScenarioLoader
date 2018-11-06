@@ -31,6 +31,9 @@ class TimeStamp:
     def __ne__(self, other):
         return not self.__eq__(other)
 
+    def getInt(self):
+        return (self.__sec, self.__usec)
+
     def getFloat(self):
         time = 0.0
         time += self.__usec
@@ -51,6 +54,12 @@ class Pose:
         self.__roll = roll
         self.__pitch = pitch
         self.__yaw = yaw
+
+    def getPosition(self):
+        return (self.__x, self.__y, self.__z)
+
+    def getOrientation(self):
+        return (self.__roll, self.__pitch, self.__yaw)
 
     def __eq__(self, other):
         if isinstance(other, Pose):

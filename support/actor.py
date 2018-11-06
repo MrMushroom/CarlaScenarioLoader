@@ -28,6 +28,9 @@ class Actor(IObserver):
         self.__dataExchangeLock = Lock()
         self.__timedEventHandler = None
 
+    def getName(self):
+        return self.__name
+
     def getIsConnected(self):
         self.__dataExchangeLock.acquire()
         isConnected = self.__isConnected
@@ -58,7 +61,7 @@ class Actor(IObserver):
         pass
 
     @abc.abstractmethod
-    def actorThread(self):
+    def _actorThread(self):
         pass
 
 
@@ -72,5 +75,5 @@ class CarlaActor(Actor):
     def disconnectFromSimulatorAndEventHandler(self):
         raise NotImplementedError("implement disconnectFromSimulatorAndEventHandler")
 
-    def actorThread(self):
+    def _actorThread(self):
         raise NotImplementedError("implement actorThread")

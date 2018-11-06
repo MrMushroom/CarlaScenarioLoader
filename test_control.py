@@ -34,7 +34,7 @@ class TestControl:
 
     # parses config; returns on error
     def setupTestWithConfig(self, fileName):
-        if not self.__scenarioParser.parseScenarioXML(fileName):
+        if not self.__scenarioParser.parseScenario(fileName):
             return False
 
         raise NotImplementedError("Scenario parsing not yet full yimplemented")

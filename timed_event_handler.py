@@ -29,5 +29,5 @@ class TimedEventHandler:
     def unsubscribe(self, name):
         raise NotImplementedError("implement unsubscribe")
 
-    def notify(self):
+    def __notify(self):
         raise NotImplementedError("implement notify")
