@@ -13,6 +13,7 @@ from pprint import pprint
 
 from support.singleton import Singleton
 from support.actor import CarlaActor
+from support.util import Action
 
 
 class ScenarioParser:
@@ -136,26 +137,44 @@ class OpenScenarioParser(ScenarioParser):
         return True
 
     def _processActors(self):
+        # parse Entities
         # inform about unsupported parts
         if("Selection" in self._scenarioDictionary["Entities"]):
             print("[INFO][ScenarioParser::_processActors] Selections not supported yet")
 
-        # go parse
+        # go parse Entities
         try:
             for entity in self._scenarioDictionary["Entities"]["Object"]:
+                # choice CatalogReference, Vehicle, Pedestrian, MiscObject
                 if "CatalogReference" in entity:
-                    print("[INFO][ScenarioParser::_processActors] CatalogReference not supported yet")
+                    print("[WARNING][ScenarioParser::_processActors] CatalogReference not parsed. Guessing Vehicle:", entity["@name"])
+                    self._actors.append(CarlaActor("Vehicle", entity["@name"]))
                 elif "Vehicle" in entity:
-                    actor = CarlaActor(entity["Vehicle"]["@category"], entity["@name"])
-                    self._actors.append(actor)
+                    self._actors.append(CarlaActor("Vehicle", entity["@name"]))
                 elif "Pedestrian" in entity:
                     print("[INFO][ScenarioParser::_processActors] Pedestrian not supported yet")
                 elif "MiscObject" in entity:
                     print("[INFO][ScenarioParser::_processActors] MiscObject not supported yet")
 
+                # Controller
+                if "Controller" in entity:
+                    print("[INFO][ScenarioParser::_processActors] Controller not supported yet")
+
         except:
             print("[Error][ScenarioParser::_processActors] Unexpected error:", sys.exc_info())
             return False
+
+        # parse Storyboard-Init
+        if "Global" in self._scenarioDictionary["Storyboard"]["Init"]["Actions"]:
+            print("[INFO][ScenarioParser::_processActors] Init:Action:Global not supported yet")
+        if "UserDefined" in self._scenarioDictionary["Storyboard"]["Init"]["Actions"]:
+            print("[INFO][ScenarioParser::_processActors] Init:Action:UserDefined not supported yet")
+        if "Private" in self._scenarioDictionary["Storyboard"]["Init"]["Actions"]:
+            for action in self._scenarioDictionary["Storyboard"]["Init"]["Actions"]["Private"]:
+                for actor in self._actors:
+                    if actor.getName() == action["@object"]:
+                        # parse the action and set speed and pose for actor
+                        actor.setAction(action["Action"])
 
         return True
 

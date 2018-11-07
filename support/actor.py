@@ -44,6 +44,10 @@ class Actor(IObserver):
         self.__dataExchangeLock.release()
         return isRunning
 
+    def setAction(self, action):
+        print (action)
+        raise NotImplementedError("implement setAction")
+
     def startActing(self):
         raise NotImplementedError("implement startActing")
 
@@ -67,7 +71,7 @@ class Actor(IObserver):
 
 
 class CarlaActor(Actor):
-    def __init__(self, actorType, name, events=[], enableLogging=False, pose=Pose(), speed=0.0, timestamp=TimeStamp()):
+    def __init__(self, actorType, name, events=[], enableLogging=False, pose=None, speed=None, timestamp=None):
         Actor.__init__(self, actorType, name, events, enableLogging, pose, speed, timestamp)
 
     def connectToSimulatorAndEvenHandler(self, ipAddress, port, timedEventHandler):
