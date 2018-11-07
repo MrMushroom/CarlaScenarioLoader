@@ -6,6 +6,7 @@
 # For a copy, see <https://opensource.org/licenses/MIT>.
 
 import abc
+import sys
 import xmlschema
 
 from pprint import pprint
@@ -22,25 +23,29 @@ class ScenarioParser:
 
         self._scenarioDictionary = {}
 
-        self.__actors = []
-        self.__simTimeEvents = []
-        self.__stateEvents = []
-        self.__sceneDescription = None
+        self._actors = []
+        self._simTimeEvents = []
+        self._stateEvents = []
+        self._sceneDescription = None
 
     def getActors(self):
-        return self.__actors
+        return self._actors
 
     def getSimTimeEvents(self):
-        return self.__simTimeEvents
+        return self._simTimeEvents
 
     def getStateEvents(self):
-        return self.__stateEvents
+        return self._stateEvents
 
     def getSceneDescription(self):
-        return self.__sceneDescription
+        return self._sceneDescription
 
     @abc.abstractmethod
     def parseScenario(self, scenarioDescriptionFilePath):
+        pass
+
+    @abc.abstractmethod
+    def _processCatalogs(self):
         pass
 
     @abc.abstractmethod
@@ -104,6 +109,10 @@ class OpenScenarioParser(ScenarioParser):
             print("[INFO][ScenarioParser::parseScenario] Unexpected error during dictionary loading")
             return False
 
+        if not self._processCatalogs():
+            print("[INFO][ScenarioParser::parseScenario] Unexpected error during catalog processing")
+            return False
+
         if not self._processActors():
             print("[INFO][ScenarioParser::parseScenario] Unexpected error during actor processing")
             return False
@@ -122,10 +131,33 @@ class OpenScenarioParser(ScenarioParser):
 
         return True
 
+    def _processCatalogs(self):
+        print("[INFO][ScenarioParser::_processCatalogs] Catalogs are not supported yet")
+        return True
+
     def _processActors(self):
-        pprint(self._scenarioDictionary)
-        print("---")
-        raise NotImplementedError("implement processActors")
+        # inform about unsupported parts
+        if("Selection" in self._scenarioDictionary["Entities"]):
+            print("[INFO][ScenarioParser::_processActors] Selections not supported yet")
+
+        # go parse
+        try:
+            for entity in self._scenarioDictionary["Entities"]["Object"]:
+                if "CatalogReference" in entity:
+                    print("[INFO][ScenarioParser::_processActors] CatalogReference not supported yet")
+                elif "Vehicle" in entity:
+                    actor = CarlaActor(entity["Vehicle"]["@category"], entity["@name"])
+                    self._actors.append(actor)
+                elif "Pedestrian" in entity:
+                    print("[INFO][ScenarioParser::_processActors] Pedestrian not supported yet")
+                elif "MiscObject" in entity:
+                    print("[INFO][ScenarioParser::_processActors] MiscObject not supported yet")
+
+        except:
+            print("[Error][ScenarioParser::_processActors] Unexpected error:", sys.exc_info())
+            return False
+
+        return True
 
     def _processEntityEvents(self):
         raise NotImplementedError("implement processEntityEvents")

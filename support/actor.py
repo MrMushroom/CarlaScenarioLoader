@@ -10,21 +10,22 @@ import abc
 from threading import Lock
 
 from .observer import IObserver
+from .util import Pose, TimeStamp
 
 
 class Actor(IObserver):
-    def __init__(self, actorType, name, events, enableLogging, timestamp, pose, speed):
+    def __init__(self, actorType, name, events, enableLogging, pose, speed, timestamp):
         self.__actorType = actorType
         self.__name = name
         self.__events = events
         self.__isLogging = enableLogging
         self.__isConnected = False
         self.__isRunning = False
-        self.__currentPose = None
-        self.__currentSpeed = 0.0
+        self.__currentPose = pose
+        self.__currentSpeed = speed
         self.__currentTimeStamp = timestamp
-        self.__desiredPose = pose
-        self.__desiredSpeed = speed
+        self.__desiredPose = None
+        self.__desiredSpeed = None
         self.__dataExchangeLock = Lock()
         self.__timedEventHandler = None
 
@@ -66,8 +67,8 @@ class Actor(IObserver):
 
 
 class CarlaActor(Actor):
-    def __init__(self, actorType, name, events, enableLogging, timestamp, pose, speed):
-        Actor.__init__(self, actorType, name, events, enableLogging, timestamp, pose, speed)
+    def __init__(self, actorType, name, events=[], enableLogging=False, pose=Pose(), speed=0.0, timestamp=TimeStamp()):
+        Actor.__init__(self, actorType, name, events, enableLogging, pose, speed, timestamp)
 
     def connectToSimulatorAndEvenHandler(self, ipAddress, port, timedEventHandler):
         raise NotImplementedError("implement connectToSimulatorAndEvenHandler")
