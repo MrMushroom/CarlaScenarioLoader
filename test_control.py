@@ -41,16 +41,16 @@ class TestControl:
         return False
 
     def startSimulation(self):
-        print "[WARNING][TestControl::startSimulation] Not yet implemented"
+        print("[WARNING][TestControl::startSimulation] Not yet implemented")
 
         return False
 
     def stopSimulation(self):
-        print "[WARNING][TestControl::stopSimulation] Not yet implemented"
+        print("[WARNING][TestControl::stopSimulation] Not yet implemented")
 
         return False
 
     def __getConfigDictFromFile(self, fileName):
-        print "[WARNING][TestControl::getConfigDictFromFile] Not yet implemented"
+        print("[WARNING][TestControl::getConfigDictFromFile] Not yet implemented")
 
         return False

@@ -9,7 +9,7 @@ import abc
 
 from threading import Lock
 
-from observer import IObserver
+from .observer import IObserver
 
 
 class Actor(IObserver):

@@ -8,6 +8,8 @@
 import abc
 import xmlschema
 
+from pprint import pprint
+
 from support.singleton import Singleton
 from support.actor import CarlaActor
 
@@ -65,7 +67,7 @@ class ScenarioParser:
 class OpenScenarioParser(ScenarioParser):
     def __init__(self):
         ScenarioParser.__init__(self, "schema/OpenSCENARIO_v0.9.1.xsd")
-        print "[INFO] loaded schema/OpenSCENARIO_v0.9.1.xsd into ScenarioParser"
+        print("[INFO] loaded schema/OpenSCENARIO_v0.9.1.xsd into ScenarioParser")
 
         self.__oscSchema = None
 
@@ -91,20 +93,38 @@ class OpenScenarioParser(ScenarioParser):
 
     def parseScenario(self, scenarioDescriptionFilePath):
         if not self.__loadSchema():
-            print "[INFO][ScenarioParser::parseScenario] Unexpected error during XSD loading"
+            print("[INFO][ScenarioParser::parseScenario] Unexpected error during XSD loading")
             return False
 
         if not self.__validateOSC(scenarioDescriptionFilePath):
-            print "[INFO][ScenarioParser::parseScenario] Unexpected error during XML validation"
+            print("[INFO][ScenarioParser::parseScenario] Unexpected error during XML validation")
             return False
 
         if not self.__loadScenarioDictionary(scenarioDescriptionFilePath):
-            print "[INFO][ScenarioParser::parseScenario] Unexpected error during dictionary loading"
+            print("[INFO][ScenarioParser::parseScenario] Unexpected error during dictionary loading")
             return False
 
-        return self._processActors() and self._processEntityEvents() and self._processSimTimeEvents() and self._processStateEvents()
+        if not self._processActors():
+            print("[INFO][ScenarioParser::parseScenario] Unexpected error during actor processing")
+            return False
+
+        if not self._processEntityEvents():
+            print("[INFO][ScenarioParser::parseScenario] Unexpected error during EntityEvent processing")
+            return False
+
+        if not self._processSimTimeEvents():
+            print("[INFO][ScenarioParser::parseScenario] Unexpected error during SimTimeEvent processing")
+            return False
+
+        if not self._processStateEvents():
+            print("[INFO][ScenarioParser::parseScenario] Unexpected error during StateEvents processing")
+            return False
+
+        return True
 
     def _processActors(self):
+        pprint(self._scenarioDictionary)
+        print("---")
         raise NotImplementedError("implement processActors")
 
     def _processEntityEvents(self):
