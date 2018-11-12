@@ -121,6 +121,37 @@
         <Act name="MyAct">
             <Sequence name="MySequence" numberOfExecutions="1">
                 <Actors>
+                    <Entity name="Ego"/>
+                </Actors>
+                <Maneuver name="EgoGlobalRoute">
+                    <Event name="GoStraightAhead200m" priority="overwrite">
+                        <Action name="GoStraightAheadAction">
+                            <Private>
+                                <Routing>
+                                    <FollowTrajectory>
+                                        <CatalogReference catalogName="TrajectoryCatalog" entryName="MyLaneChangeTrajectory"/>
+                                        <Longitudinal>
+                                            <None/>
+                                        </Longitudinal>
+                                        <Lateral purpose="steering"/>
+                                    </FollowTrajectory>
+                                </Routing>
+                            </Private>
+                        </Action>
+                        <StartConditions>
+                            <ConditionGroup>
+                                <Condition name="MyStartCondition" delay="0" edge="rising">
+                                    <ByState>
+                                        <AtStart type="act" name="MyAct"/>
+                                    </ByState>
+                                </Condition>
+                            </ConditionGroup>
+                        </StartConditions>
+                    </Event>
+                </Maneuver>
+            </Sequence>
+            <Sequence name="MySequence" numberOfExecutions="1">
+                <Actors>
                     <Entity name="$owner"/>
                 </Actors>
                 <Maneuver name="MyLaneChangeManeuver">

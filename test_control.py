@@ -34,11 +34,20 @@ class TestControl:
 
     # parses config; returns on error
     def setupTestWithConfig(self, fileName):
+        # parse scenario
         if not self.__scenarioParser.parseScenario(fileName):
             return False
 
-        raise NotImplementedError("Scenario parsing not yet full yimplemented")
-        return False
+        # setup carla
+        print("# setup carla")
+
+        # setup actors
+        print("# setup actors")
+
+        # setup timedEventHandler
+        print("# setup timedEventHandler")
+
+        return True
 
     def startSimulation(self):
         print("[WARNING][TestControl::startSimulation] Not yet implemented")

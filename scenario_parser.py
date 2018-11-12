@@ -13,7 +13,7 @@ from pprint import pprint
 
 from support.singleton import Singleton
 from support.actor import CarlaActor
-from support.util import Action
+from support.util import Action, Pose
 
 
 class ScenarioParser:
@@ -174,18 +174,61 @@ class OpenScenarioParser(ScenarioParser):
                 for actor in self._actors:
                     if actor.getName() == action["@object"]:
                         # parse the action and set speed and pose for actor
-                        actor.setAction(action["Action"])
-
+                        speed, pose = self._parseSpeedAndPoseFromAction(action["Action"])
+                        actor.setInit(speed, pose)
         return True
 
     def _processEntityEvents(self):
-        raise NotImplementedError("implement processEntityEvents")
+        try:
+            if(len(self._scenarioDictionary["Storyboard"]["Story"]) != 1):
+                print("[INFO][ScenarioParser::_processActors] Use Exactly one Story")
+                return False
+            if(len(self._scenarioDictionary["Storyboard"]["Story"][0]["Act"]) != 1):
+                print("[INFO][ScenarioParser::_processActors] Use Exactly one Act")
+                return False
+            if(len(self._scenarioDictionary["Storyboard"]["Story"][0]["Act"][0]["Conditions"]["Start"]["ConditionGroup"]) != 1):
+                print("[INFO][ScenarioParser::_processActors] Use Exactly one ConditionGroup")
+                return False
+            if(len(self._scenarioDictionary["Storyboard"]["Story"][0]["Act"][0]["Conditions"]["Start"]["ConditionGroup"][0]["Condition"]) != 1):
+                print("[INFO][ScenarioParser::_processActors] Use Exactly one Condition")
+                return False
+            if(self._scenarioDictionary["Storyboard"]["Story"][0]["Act"][0]["Conditions"]["Start"]["ConditionGroup"][0]["Condition"][0]["ByValue"]["SimulationTime"]["@rule"] != "equal_to" or
+                    self._scenarioDictionary["Storyboard"]["Story"][0]["Act"][0]["Conditions"]["Start"]["ConditionGroup"][0]["Condition"][0]["ByValue"]["SimulationTime"]["@value"] != 0.0):
+                print("[INFO][ScenarioParser::_processActors] unsupported starting condition")
+                return False
+
+            # TODO parse actor behavior here
+            print("# TODO parse actor behavior here")
+            return True
+        except:
+            print("[Error][ScenarioParser::_processEntityEvents] Unexpected error:", sys.exc_info())
+            return False
+
+        return True
 
     def _processSimTimeEvents(self):
-        raise NotImplementedError("implement processSimTimeEvents")
+        print("[INFO][ScenarioParser::_processSimTimeEvents] No timed events supported yet")
+        return True
 
     def _processStateEvents(self):
-        raise NotImplementedError("implement processStateEvents")
+        print("[INFO][ScenarioParser::_processSimTimeEvents] No state events supported yet")
+        return True
 
     def _processSceneDescription(self):
-        raise NotImplementedError("implement processSceneDescription")
+        print("[INFO][ScenarioParser::_processSimTimeEvents] No scene description supported yet")
+        return True
+
+    def _parseSpeedAndPoseFromAction(self, action):
+        try:
+            speed = action[0]["Longitudinal"]["Speed"]["Target"]["Absolute"]["@value"]
+            pose = Pose(action[1]["Position"]["World"]["@x"],
+                        action[1]["Position"]["World"]["@y"],
+                        action[1]["Position"]["World"]["@z"],
+                        action[1]["Position"]["World"]["@r"],
+                        action[1]["Position"]["World"]["@p"],
+                        action[1]["Position"]["World"]["@h"])
+
+            return speed, pose
+        except:
+            print("[Error][ScenarioParser::_parseSpeedAndPoseFromAction] Unexpected error:", sys.exc_info())
+            return 0.0, None

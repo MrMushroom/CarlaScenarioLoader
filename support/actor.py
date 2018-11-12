@@ -15,38 +15,40 @@ from .util import Pose, TimeStamp
 
 class Actor(IObserver):
     def __init__(self, actorType, name, events, enableLogging, pose, speed, timestamp):
-        self.__actorType = actorType
-        self.__name = name
-        self.__events = events
-        self.__isLogging = enableLogging
-        self.__isConnected = False
-        self.__isRunning = False
-        self.__currentPose = pose
-        self.__currentSpeed = speed
-        self.__currentTimeStamp = timestamp
-        self.__desiredPose = None
-        self.__desiredSpeed = None
-        self.__dataExchangeLock = Lock()
-        self.__timedEventHandler = None
+        self._actorType = actorType
+        self._name = name
+        self._events = events
+        self._isLogging = enableLogging
+        self._isConnected = False
+        self._isRunning = False
+        self._currentPose = pose
+        self._currentSpeed = speed
+        self._currentTimeStamp = timestamp
+        self._desiredPose = None
+        self._desiredSpeed = None
+        self._desiredTimeStamp = timestamp
+        self._dataExchangeLock = Lock()
+        self._timedEventHandler = None
 
     def getName(self):
-        return self.__name
+        return self._name
 
     def getIsConnected(self):
-        self.__dataExchangeLock.acquire()
-        isConnected = self.__isConnected
-        self.__dataExchangeLock.release()
+        self._dataExchangeLock.acquire()
+        isConnected = self._isConnected
+        self._dataExchangeLock.release()
         return isConnected
 
     def getIsRunning(self):
-        self.__dataExchangeLock.acquire()
-        isRunning = self.__isRunning
-        self.__dataExchangeLock.release()
+        self._dataExchangeLock.acquire()
+        isRunning = self._isRunning
+        self._dataExchangeLock.release()
         return isRunning
 
-    def setAction(self, action):
-        print (action)
-        raise NotImplementedError("implement setAction")
+    def setInit(self, speed, pose):
+        self._desiredSpeed = speed
+        self._desiredPose = pose
+        self._desiredTimeStamp = TimeStamp()
 
     def startActing(self):
         raise NotImplementedError("implement startActing")
@@ -81,4 +83,12 @@ class CarlaActor(Actor):
         raise NotImplementedError("implement disconnectFromSimulatorAndEventHandler")
 
     def _actorThread(self):
-        raise NotImplementedError("implement actorThread")
+        print (self._name, "started acting")
+        while(self._isRunning):
+            # receive Carla data
+            # send Carla data to ROS
+
+            # receive ROS data
+            # send ROS data to Carla
+            continue
+        print (self._name, "stopped acting")
