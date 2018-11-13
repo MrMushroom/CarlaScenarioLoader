@@ -6,6 +6,10 @@
 # For a copy, see <https://opensource.org/licenses/MIT>.
 
 import abc
+import carla
+import datetime
+import sys
+import time
 
 from support.singleton import Singleton
 
@@ -43,17 +47,31 @@ class SimulatorControl:
 
 
 class CarlaSimulatorControl(SimulatorControl):
-    def __init__(self):
+    def __init__(self, simulatorIP):
         SimulatorControl.__init__(self, "Carla")
+        self._simIP = simulatorIP
+        self._simPort = 2000
+        self._client = None
+        self._timeout = 2.0
 
     def connect(self):
-        raise NotImplementedError("implement connect")
+        try:
+            self._client = carla.Client(self._simIP, self._simPort)
+            self._client.set_timeout(self._timeout)
+            self.run()
+            return True
+        except:
+            print("[Error][CarlaSimulatorControl::connect] Unexpected error:", sys.exc_info())
+            return False
 
     def disconnect(self):
-        raise NotImplementedError("implement disconnect")
+        print("[WARNING][CarlaSimulatorControl::disconnect] disconnect not yet fully implemented into Carla 0.9.0")
 
     def loadScene(self, sceneDescription):
-        raise NotImplementedError("implement loadScene")
+        print("[ERROR][CarlaSimulatorControl::loadScene] loadScene not implemented into Carla 0.9.0")
 
     def run(self):
-        raise NotImplementedError("implement run")
+        self._client.get_world().on_tick(self.run_cb)
+
+    def run_cb(self, timestamp):
+        print(timestamp)

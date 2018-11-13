@@ -6,6 +6,8 @@
 # For a copy, see <https://opensource.org/licenses/MIT>.
 
 import abc
+import carla
+import sys
 
 from threading import Lock
 
@@ -29,6 +31,7 @@ class Actor(IObserver):
         self._desiredTimeStamp = timestamp
         self._dataExchangeLock = Lock()
         self._timedEventHandler = None
+        self._client = None
 
     def getName(self):
         return self._name
@@ -56,11 +59,11 @@ class Actor(IObserver):
     def stopActing(self):
         raise NotImplementedError("implement stopActing")
 
-    def update(self, event):
-        raise NotImplementedError("implement update")
+    # def update(self, event):
+    #     raise NotImplementedError("implement update")
 
     @abc.abstractmethod
-    def connectToSimulatorAndEvenHandler(self, ipAddress, port, timedEventHandler):
+    def connectToSimulatorAndEvenHandler(self, ipAddress, port, timeout, timedEventHandler):
         pass
 
     @abc.abstractmethod
@@ -76,10 +79,22 @@ class CarlaActor(Actor):
     def __init__(self, actorType, name, events=[], enableLogging=False, pose=None, speed=None, timestamp=None):
         Actor.__init__(self, actorType, name, events, enableLogging, pose, speed, timestamp)
 
-    def connectToSimulatorAndEvenHandler(self, ipAddress, port, timedEventHandler):
-        raise NotImplementedError("implement connectToSimulatorAndEvenHandler")
+    def connectToSimulatorAndEvenHandler(self, ipAddress, port, timeout, timedEventHandler):
+        try:
+            self._client = carla.Client(ipAddress, port)
+            self._client.set_timeout(timeout)
+            print("TODO spawn actor")
+            for elem in self._client.get_world().get_blueprint_library():
+                print (elem)
+            print("TODO connect to timed event handler")
+            return True
+        except:
+            print("[Error][CarlaActor::connectToSimulatorAndEvenHandler] Unexpected error:", sys.exc_info())
+            return False
 
     def disconnectFromSimulatorAndEventHandler(self):
+        print("TODO destroy actor")
+        print("TODO disconnect from timed event handler")
         raise NotImplementedError("implement disconnectFromSimulatorAndEventHandler")
 
     def _actorThread(self):

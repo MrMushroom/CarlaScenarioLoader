@@ -24,14 +24,14 @@ def main():
             print("[Error] Wrong command line parameters, try: \"" +
                   inspect.getfile(inspect.currentframe()) + " help\"")
             exit()
-    # TODO check later for > 4, for more scenarios ;)
-    elif len(sys.argv) == 4:
+    # TODO check later for > 5, for more scenarios ;)
+    elif len(sys.argv) == 5:
             # check for Scenario-file
-        if os.path.isfile(sys.argv[3]):
+        if os.path.isfile(sys.argv[4]):
             # create TestControl class
-            testControl = TestControl(sys.argv[1], sys.argv[2])
+            testControl = TestControl(sys.argv[1], sys.argv[2], sys.argv[3])
             # try to load scenario-config
-            if not testControl.setupTestWithConfig(sys.argv[3]):
+            if not testControl.setupTestWithConfig(sys.argv[4]):
                 print("[Error] TestControl-Setup failed")
                 exit()
             testControl.startSimulation()

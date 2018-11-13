@@ -15,12 +15,15 @@ from simulator_control import CarlaSimulatorControl
 class TestControl:
     __metaclass__ = Singleton
 
-    def __init__(self, simulatorType, scenarioFileType):
-        self.__actors_ = []
+    def __init__(self, simulatorType, simulatorIP, scenarioFileType):
+        self.__actors = []
         self.__scenarioParser = None
         self.__simulatorControl = None
         self.__timedEventHandler = None
         self.__logProcessor = None
+        self.__simulatorIP = simulatorIP
+        self.__simulatorPort = 2000
+        self.__simulatorTimeout = 2.0
 
         if scenarioFileType == "OpenScenario":
             self.__scenarioParser = OpenScenarioParser()
@@ -28,24 +31,37 @@ class TestControl:
             raise NotImplementedError("Scenarios of Type \"" + scenarioFileType + "\" are not yet supported")
 
         if simulatorType == "Carla":
-            self.__simulatorControl = CarlaSimulatorControl()
+            self.__simulatorControl = CarlaSimulatorControl(simulatorIP)
         else:
             raise NotImplementedError("Simulator of Type \"" + simulatorType + "\" is not yet supported")
 
     # parses config; returns on error
     def setupTestWithConfig(self, fileName):
         # parse scenario
+        print("# parse scenario")
         if not self.__scenarioParser.parseScenario(fileName):
             return False
+        self.__actors = self.__scenarioParser.getActors()
+        # self.__scenarioParser.getSceneDescription()
+        # self.__scenarioParser.getSimTimeEvents()
+        # self.__scenarioParser.getStateEvents()
 
         # setup carla
         print("# setup carla")
+        self.__simulatorControl.connect()
+
+        # setup world
+        print("# setup world - skipped")
+        # TODO load Scene
 
         # setup actors
         print("# setup actors")
+        for actor in self.__actors:
+            actor.connectToSimulatorAndEvenHandler(
+                self.__simulatorIP, self.__simulatorPort, self.__simulatorTimeout, self.__timedEventHandler)
 
         # setup timedEventHandler
-        print("# setup timedEventHandler")
+        print("# setup timedEventHandler - skipped (waiting for sync mode)")
 
         return True
 
