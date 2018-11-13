@@ -65,15 +65,29 @@ class TestControl:
 
         return True
 
-    def startSimulation(self):
+    def executeTest(self):
         print("[WARNING][TestControl::startSimulation] Not yet implemented")
 
         return False
 
-    def stopSimulation(self):
-        print("[WARNING][TestControl::stopSimulation] Not yet implemented")
+    def cleanupTest(self):
+        # cleanup timedEventHandler
+        print("# cleanup timedEventHandler - skipped (waiting for sync mode)")
 
-        return False
+        # cleanup actors
+        print("# cleanup actors")
+        for actor in self.__actors:
+            actor.disconnectFromSimulatorAndEventHandler()
+
+        # cleanup world
+        print("# setup world - skipped")
+        # TODO default Scene ?
+
+        # cleanup carla
+        print("# cleanup carla")
+        self.__simulatorControl.disconnect()
+
+        return True
 
     def __getConfigDictFromFile(self, fileName):
         print("[WARNING][TestControl::getConfigDictFromFile] Not yet implemented")

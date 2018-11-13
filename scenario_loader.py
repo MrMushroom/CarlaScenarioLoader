@@ -34,12 +34,11 @@ def main():
             if not testControl.setupTestWithConfig(sys.argv[4]):
                 print("[Error] TestControl-Setup failed")
                 exit()
-            testControl.startSimulation()
+            testControl.executeTest()
             # Simulation is built up
             # Simulation is executed
-            testControl.stopSimulation()
-            # Simulation environment is cleaned
-            exit()
+            testControl.cleanupTest()
+            # Simulation environment is stopped
 
         else:
             print("[Error] third parameter has to be a valid filepath")
