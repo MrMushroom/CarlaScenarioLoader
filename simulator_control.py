@@ -47,17 +47,17 @@ class SimulatorControl:
 
 
 class CarlaSimulatorControl(SimulatorControl):
-    def __init__(self, simulatorIP):
+    def __init__(self, simulatorIP, simulatorPort, simulatorTimeout):
         SimulatorControl.__init__(self, "Carla")
         self._simIP = simulatorIP
-        self._simPort = 2000
+        self._simPort = simulatorPort
+        self._simTimeout = simulatorTimeout
         self._client = None
-        self._timeout = 2.0
 
     def connect(self):
         try:
             self._client = carla.Client(self._simIP, self._simPort)
-            self._client.set_timeout(self._timeout)
+            self._client.set_timeout(self._simTimeout)
             self.run()
             return True
         except:
@@ -75,3 +75,4 @@ class CarlaSimulatorControl(SimulatorControl):
 
     def run_cb(self, timestamp):
         print(timestamp)
+        print("TODO invoke Observer with timestamp")

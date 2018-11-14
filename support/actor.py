@@ -7,29 +7,33 @@
 
 import abc
 import carla
+import math
 import sys
-
-from threading import Lock
+import threading
 
 from .observer import IObserver
 from .util import Pose, TimeStamp
 
 
-class Actor(IObserver):
+class Actor(IObserver, threading.Thread):
     def __init__(self, actorType, name, events, enableLogging, pose, speed, timestamp):
+        threading.Thread.__init__(self)
+
+        self.name = name
+
         self._actorType = actorType
         self._name = name
         self._events = events
         self._isLogging = enableLogging
         self._isConnected = False
         self._isRunning = False
-        self._currentPose = pose
-        self._currentSpeed = speed
-        self._currentTimeStamp = timestamp
-        self._desiredPose = None
-        self._desiredSpeed = None
+        self._currentPose = None
+        self._currentSpeed = None
+        self._currentTimeStamp = None
+        self._desiredPose = pose
+        self._desiredSpeed = speed
         self._desiredTimeStamp = timestamp
-        self._dataExchangeLock = Lock()
+        self._dataExchangeLock = threading.Lock()
         self._timedEventHandler = None
         self._client = None
 
@@ -54,10 +58,20 @@ class Actor(IObserver):
         self._desiredTimeStamp = TimeStamp()
 
     def startActing(self):
-        raise NotImplementedError("implement startActing")
+        self._isRunning = True
+        threading.Thread.start(self)
 
     def stopActing(self):
-        raise NotImplementedError("implement stopActing")
+        self._isRunning = False
+        self.join()
+
+    # threading.Thread mehtods
+    def start(self):
+        print("[INFO][CarlaActor::start] Don't use this")
+        self.startActing()
+
+    def run(self):
+        self._actorThread()
 
     # def update(self, event):
     #     raise NotImplementedError("implement update")
@@ -94,10 +108,12 @@ class CarlaActor(Actor):
                 raise Exception("Couldn't spawn actor")
 
             print("TODO connect to timed event handler")
-            return True
+            self._isConnected = True
         except:
             print("[Error][CarlaActor::connectToSimulatorAndEvenHandler] Unexpected error:", sys.exc_info())
-            return False
+            self._isConnected = False
+        finally:
+            return self._isConnected
 
     def disconnectFromSimulatorAndEventHandler(self):
         try:
@@ -106,18 +122,61 @@ class CarlaActor(Actor):
             print("TODO disconnect TCP connection maybe?")
             self.__carlaActor = None
             print("TODO disconnect from timed event handler")
+            self._isConnected = False
             return True
         except:
             print("[Error][CarlaActor::disconnectFromSimulatorAndEventHandler] Unexpected error:", sys.exc_info())
+            self._isConnected = False
             return False
+
+    def handleEgo(self):
+        # send data to ROS
+
+        # receive data from ROS
+        self._desiredPose = self._currentPose
+        self._desiredSpeed = self._desiredSpeed
+
+    def handleNoneEgo(self):
+        raise NotImplementedError("Implement me")
 
     def _actorThread(self):
         print (self._name, "started acting")
         while(self._isRunning):
-            # receive Carla data
-            # send Carla data to ROS
+            self._dataExchangeLock.acquire()
 
-            # receive ROS data
-            # send ROS data to Carla
-            continue
+            try:
+                if self._isConnected == False:
+                    raise RuntimeError("Actor is not connected to the simulator")
+
+                # receive Carla data
+                transform = self.__carlaActor.get_transform()
+                self._currentPose = Pose(transform.location.x,
+                                         transform.location.y,
+                                         transform.location.z,
+                                         transform.rotation.roll,
+                                         transform.rotation.pitch,
+                                         transform.rotation.yaw)
+                velocity = self.__carlaActor.get_velocity()
+                self._currentSpeed = math.sqrt(pow(velocity.x, 2.0) + pow(velocity.y, 2.0) + pow(velocity.z, 2.0))
+
+                if(self._name == "Ego"):
+                    self.handleEgo()
+                else:
+                    self.handleNonEgo()
+
+                # send data to Carla
+                transform = carla.Transform(carla.Location(self._desiredPose.getPosition()[0],
+                                                           self._desiredPose.getPosition()[1],
+                                                           self._desiredPose.getPosition()[2]),
+                                            carla.Rotation(self._desiredPose.getOrientation()[1],
+                                                           self._desiredPose.getOrientation()[2],
+                                                           self._desiredPose.getOrientation()[0]))
+
+                self.__carlaActor.set_transform(transform)
+
+            except:
+                print("[Error][CarlaActor::_actorThread] Unexpected error:", sys.exc_info())
+
+            self._dataExchangeLock.release()
+
         print (self._name, "stopped acting")

@@ -29,7 +29,7 @@ def main():
             # check for Scenario-file
         if os.path.isfile(sys.argv[4]):
             # create TestControl class
-            testControl = TestControl(sys.argv[1], sys.argv[2], sys.argv[3])
+            testControl = TestControl(sys.argv[1], sys.argv[2], 2000, 2.0, sys.argv[3])
             # try to load scenario-config
             if not testControl.setupTestWithConfig(sys.argv[4]):
                 print("[Error] TestControl-Setup failed")

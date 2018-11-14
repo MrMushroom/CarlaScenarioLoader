@@ -6,6 +6,7 @@
 # For a copy, see <https://opensource.org/licenses/MIT>.
 
 import sys
+import time
 
 from support.singleton import Singleton
 from scenario_parser import OpenScenarioParser
@@ -15,15 +16,15 @@ from simulator_control import CarlaSimulatorControl
 class TestControl:
     __metaclass__ = Singleton
 
-    def __init__(self, simulatorType, simulatorIP, scenarioFileType):
+    def __init__(self, simulatorType, simulatorIP, simulatorPort, simulatorTimeout, scenarioFileType):
         self.__actors = []
         self.__scenarioParser = None
         self.__simulatorControl = None
         self.__timedEventHandler = None
         self.__logProcessor = None
         self.__simulatorIP = simulatorIP
-        self.__simulatorPort = 2000
-        self.__simulatorTimeout = 2.0
+        self.__simulatorPort = simulatorPort
+        self.__simulatorTimeout = simulatorTimeout
 
         if scenarioFileType == "OpenScenario":
             self.__scenarioParser = OpenScenarioParser()
@@ -31,7 +32,7 @@ class TestControl:
             raise NotImplementedError("Scenarios of Type \"" + scenarioFileType + "\" are not yet supported")
 
         if simulatorType == "Carla":
-            self.__simulatorControl = CarlaSimulatorControl(simulatorIP)
+            self.__simulatorControl = CarlaSimulatorControl(simulatorIP, simulatorPort, simulatorTimeout)
         else:
             raise NotImplementedError("Simulator of Type \"" + simulatorType + "\" is not yet supported")
 
@@ -66,7 +67,25 @@ class TestControl:
         return True
 
     def executeTest(self):
-        print("[WARNING][TestControl::startSimulation] Not yet implemented")
+        # run actors
+        print("# run actors")
+        for actor in self.__actors:
+            actor.startActing()
+
+        # run timedEventHandler
+        print("# run timedEventHandler")
+
+        # run Test - implement logic
+        print("# run Test - implement logic!!!")
+        time.sleep(10)
+
+        # stop timedEventHandler
+        print("# stop timedEventHandler")
+
+        # stop actors
+        print("# stop actors")
+        for actor in self.__actors:
+            actor.stopActing()
 
         return False
 
