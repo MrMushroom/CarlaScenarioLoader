@@ -49,7 +49,8 @@ class TestControl:
 
         # setup carla
         print("# setup carla")
-        self.__simulatorControl.connect()
+        if not self.__simulatorControl.connect():
+            return False
 
         # setup world
         print("# setup world - skipped")
@@ -57,9 +58,13 @@ class TestControl:
 
         # setup actors
         print("# setup actors")
+        isAllActorsConnected = True
         for actor in self.__actors:
-            actor.connectToSimulatorAndEvenHandler(
+            status = actor.connectToSimulatorAndEvenHandler(
                 self.__simulatorIP, self.__simulatorPort, self.__simulatorTimeout, self.__timedEventHandler)
+            isAllActorsConnected = isAllActorsConnected and status
+        if not isAllActorsConnected:
+            return False
 
         # setup timedEventHandler
         print("# setup timedEventHandler - skipped (waiting for sync mode)")

@@ -11,6 +11,7 @@ import math
 import sys
 import threading
 
+# from .control import InputController
 from .observer import IObserver
 from .util import Pose, TimeStamp
 
@@ -93,6 +94,7 @@ class CarlaActor(Actor):
     def __init__(self, actorType, name, events=[], enableLogging=False, pose=None, speed=None, timestamp=None):
         Actor.__init__(self, actorType, name, events, enableLogging, pose, speed, timestamp)
         self.__carlaActor = None
+        self.__inputController = None
 
     def connectToSimulatorAndEvenHandler(self, ipAddress, port, timeout, timedEventHandler):
         try:
@@ -105,7 +107,8 @@ class CarlaActor(Actor):
                 carla.Rotation(yaw=0.0))
             self.__carlaActor = self._client.get_world().try_spawn_actor(blueprint, transform)
             if self.__carlaActor is None:
-                raise Exception("Couldn't spawn actor")
+                print("TODO-FIX DEBUG: Couldn't spawn actor")
+                # raise Exception("Couldn't spawn actor")
 
             print("TODO connect to timed event handler")
             self._isConnected = True
@@ -131,13 +134,24 @@ class CarlaActor(Actor):
 
     def handleEgo(self):
         # send data to ROS
+        print("TODO: handle ego send data to ROS")
 
         # receive data from ROS
-        self._desiredPose = self._currentPose
-        self._desiredSpeed = self._desiredSpeed
+        if self.__inputController is None:
+            pass
+            #     self.__inputController = InputController()
+            # cur_control = self.__inputController.get_cur_control()
+            # carla_vehicle_control = carla.VehicleControl(cur_control["throttle"],
+            #                                              cur_control["steer"],
+            #                                              cur_control["brake"],
+            #                                              cur_control["hand_brake"],
+            #                                              cur_control["reverse"])
+            # self.__carlaActor.
+            #     world.vehicle.apply_control(self._control)
 
     def handleNoneEgo(self):
-        raise NotImplementedError("Implement me")
+        self._desiredPose = self._currentPose
+        self._desiredSpeed = self._desiredSpeed
 
     def _actorThread(self):
         print (self._name, "started acting")
@@ -176,6 +190,7 @@ class CarlaActor(Actor):
 
             except:
                 print("[Error][CarlaActor::_actorThread] Unexpected error:", sys.exc_info())
+                self._isRunning = False
 
             self._dataExchangeLock.release()
 

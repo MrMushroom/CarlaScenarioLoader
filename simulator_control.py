@@ -9,6 +9,7 @@ import abc
 import carla
 import datetime
 import sys
+import threading
 import time
 
 from support.singleton import Singleton
@@ -18,16 +19,23 @@ class SimulatorControl:
     __metaclass__ = Singleton
 
     def __init__(self, simName):
-        self.__simName = simName
-        self.__isConnected = False
-        self.__isRunning = False
-        self.__stateEvents = None
+        self._simName = simName
+        self._isConnected = False
+        self._isRunning = False
+        self._stateEvents = None
+        self._statusLock = threading.Lock()
 
     def getIsConnected(self):
-        raise NotImplementedError("implement getIsConnected")
+        self._statusLock.acquire()
+        isConnected = self._isConnected
+        self._statusLock.release()
+        return isConnected
 
     def getIsRunning(self):
-        raise NotImplementedError("implement getIsRunning")
+        self._statusLock.acquire()
+        isRunning = self._isRunning
+        self._statusLock.release()
+        return isRunning
 
     @abc.abstractmethod
     def connect(self):
@@ -58,14 +66,21 @@ class CarlaSimulatorControl(SimulatorControl):
         try:
             self._client = carla.Client(self._simIP, self._simPort)
             self._client.set_timeout(self._simTimeout)
+            print(self._client.get_server_version())
+            self._isConnected = True
             self.run()
             return True
         except:
             print("[Error][CarlaSimulatorControl::connect] Unexpected error:", sys.exc_info())
+            self._isConnected = False
             return False
 
     def disconnect(self):
+        self._statusLock.acquire()
         print("[WARNING][CarlaSimulatorControl::disconnect] disconnect not yet fully implemented into Carla 0.9.0")
+        self._isRunning = False
+        self._isConnected = False
+        self._statusLock.release()
 
     def loadScene(self, sceneDescription):
         print("[ERROR][CarlaSimulatorControl::loadScene] loadScene not implemented into Carla 0.9.0")
@@ -74,5 +89,9 @@ class CarlaSimulatorControl(SimulatorControl):
         self._client.get_world().on_tick(self.run_cb)
 
     def run_cb(self, timestamp):
+        self._statusLock.acquire()
+        self._isRunning = True
+        self._statusLock.release()
+
         print(timestamp)
         print("TODO invoke Observer with timestamp")
