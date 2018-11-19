@@ -8,6 +8,7 @@
 import sys
 import time
 
+from support.control import InputController
 from support.singleton import Singleton
 from scenario_parser import OpenScenarioParser
 from simulator_control import CarlaSimulatorControl
@@ -35,6 +36,9 @@ class TestControl:
             self.__simulatorControl = CarlaSimulatorControl(simulatorIP, simulatorPort, simulatorTimeout)
         else:
             raise NotImplementedError("Simulator of Type \"" + simulatorType + "\" is not yet supported")
+
+        # ROS part, not so fancy yet
+        self.__inputController = InputController()
 
     # parses config; returns on error
     def setupTestWithConfig(self, fileName):

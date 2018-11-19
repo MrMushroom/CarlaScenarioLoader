@@ -16,11 +16,14 @@ import threading
 
 from dbw_mkz_msgs.msg import BrakeCmd, GearCmd, SteeringCmd, ThrottleCmd
 
+from .singleton import Singleton
+
 
 class InputController(object):
     """
     Class to handle ros input command
     """
+    __metaclass__ = Singleton
 
     def __init__(self):
         # current control command
@@ -58,6 +61,7 @@ class InputController(object):
 
         self.lock_cur_control = threading.Lock()
 
+        rospy.init_node('control_listener', anonymous=True)
         rospy.Subscriber('/vehicle/brake_cmd', BrakeCmd,
                          self.recv_brake_cmd, queue_size=1)
         rospy.Subscriber('/vehicle/gear_cmd', GearCmd,

@@ -11,7 +11,7 @@ import math
 import sys
 import threading
 
-# from .control import InputController
+from .control import InputController
 from .observer import IObserver
 from .util import Pose, TimeStamp
 
@@ -74,8 +74,8 @@ class Actor(IObserver, threading.Thread):
     def run(self):
         self._actorThread()
 
-    # def update(self, event):
-    #     raise NotImplementedError("implement update")
+    def update(self, event):
+        raise NotImplementedError("implement update")
 
     @abc.abstractmethod
     def connectToSimulatorAndEvenHandler(self, ipAddress, port, timeout, timedEventHandler):
@@ -101,7 +101,7 @@ class CarlaActor(Actor):
             self._client = carla.Client(ipAddress, port)
             self._client.set_timeout(timeout)
             print("# try spawning actor", self._name)
-            blueprint = self._client.get_world().get_blueprint_library().find("vehicle.tesla.model3")
+            blueprint = self._client.get_world().get_blueprint_library().find("vehicle.lincoln.mkz2017")
             transform = carla.Transform(
                 carla.Location(x=140.0, y=199.0, z=40.0),
                 carla.Rotation(yaw=0.0))
@@ -138,16 +138,14 @@ class CarlaActor(Actor):
 
         # receive data from ROS
         if self.__inputController is None:
-            pass
-            #     self.__inputController = InputController()
-            # cur_control = self.__inputController.get_cur_control()
-            # carla_vehicle_control = carla.VehicleControl(cur_control["throttle"],
-            #                                              cur_control["steer"],
-            #                                              cur_control["brake"],
-            #                                              cur_control["hand_brake"],
-            #                                              cur_control["reverse"])
-            # self.__carlaActor.
-            #     world.vehicle.apply_control(self._control)
+            self.__inputController = InputController()
+        cur_control = self.__inputController.get_cur_control()
+        carla_vehicle_control = carla.VehicleControl(cur_control["throttle"],
+                                                     cur_control["steer"],
+                                                     cur_control["brake"],
+                                                     cur_control["hand_brake"],
+                                                     cur_control["reverse"])
+        self.__carlaActor.apply_control(carla_vehicle_control)
 
     def handleNoneEgo(self):
         self._desiredPose = self._currentPose
