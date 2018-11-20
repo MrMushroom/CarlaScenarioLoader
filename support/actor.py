@@ -14,6 +14,7 @@ import time
 
 from .control import InputController
 from .observer import IObserver
+from .present import MondeoPlayerAgentHandler
 from .util import Pose, TimeStamp
 from timed_event_handler import TimedEventHandler
 
@@ -137,6 +138,7 @@ class CarlaActor(Actor):
     def handleEgo(self):
         # send data to ROS
         print("TODO: handle ego send data to ROS")
+        MondeoPlayerAgentHandler().process(self.__carlaActor, self._currentTimeStamp)
 
         # receive data from ROS
         if self.__inputController is None:
@@ -153,7 +155,9 @@ class CarlaActor(Actor):
         self._desiredPose = self._currentPose
         self._desiredSpeed = self._desiredSpeed
 
-    def update(self, event):
+    def update(self, event, timestamp):
+        self._dataExchangeLock.acquire()
+        self._currentTimeStamp = timestamp
         if event is None:
             pass  # just a normal tick
         else:

@@ -21,6 +21,12 @@ class TimedEventHandler(metaclass=Singleton):
     def clear(self):
         self.__init__()
 
+    def getCurrentSimTime(self):
+        self.__syncLock.acquire()
+        timestamp = self.__currentSimTime
+        self.__syncLock.release()
+        return timestamp
+
     def updateSimStep(self, newSimTime):
         self.__syncLock.acquire()
         self.__currentSimTime = newSimTime
@@ -42,4 +48,4 @@ class TimedEventHandler(metaclass=Singleton):
 
     def __notify(self):
         for subscriber, method in self.__subscribers.items():
-            method(None)
+            method()  # TODO None dafuq
