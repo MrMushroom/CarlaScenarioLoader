@@ -19,11 +19,10 @@ from dbw_mkz_msgs.msg import BrakeCmd, GearCmd, SteeringCmd, ThrottleCmd
 from .singleton import Singleton
 
 
-class InputController(object):
+class InputController(object, metaclass=Singleton):
     """
     Class to handle ros input command
     """
-    __metaclass__ = Singleton
 
     def __init__(self):
         # current control command

@@ -10,10 +10,12 @@ import carla
 import math
 import sys
 import threading
+import time
 
 from .control import InputController
 from .observer import IObserver
 from .util import Pose, TimeStamp
+from timed_event_handler import TimedEventHandler
 
 
 class Actor(IObserver, threading.Thread):
@@ -35,7 +37,8 @@ class Actor(IObserver, threading.Thread):
         self._desiredSpeed = speed
         self._desiredTimeStamp = timestamp
         self._dataExchangeLock = threading.Lock()
-        self._timedEventHandler = None
+        self._wakeUp = threading.Event()
+        self._timeOut = 10.0
         self._client = None
 
     def getName(self):
@@ -78,7 +81,7 @@ class Actor(IObserver, threading.Thread):
         raise NotImplementedError("implement update")
 
     @abc.abstractmethod
-    def connectToSimulatorAndEvenHandler(self, ipAddress, port, timeout, timedEventHandler):
+    def connectToSimulatorAndEvenHandler(self, ipAddress, port, timeout):
         pass
 
     @abc.abstractmethod
@@ -96,7 +99,7 @@ class CarlaActor(Actor):
         self.__carlaActor = None
         self.__inputController = None
 
-    def connectToSimulatorAndEvenHandler(self, ipAddress, port, timeout, timedEventHandler):
+    def connectToSimulatorAndEvenHandler(self, ipAddress, port, timeout):
         try:
             self._client = carla.Client(ipAddress, port)
             self._client.set_timeout(timeout)
@@ -110,7 +113,7 @@ class CarlaActor(Actor):
                 print("TODO-FIX DEBUG: Couldn't spawn actor")
                 # raise Exception("Couldn't spawn actor")
 
-            print("TODO connect to timed event handler")
+            TimedEventHandler().subscribe(self._name, self.update)
             self._isConnected = True
         except:
             print("[Error][CarlaActor::connectToSimulatorAndEvenHandler] Unexpected error:", sys.exc_info())
@@ -121,11 +124,10 @@ class CarlaActor(Actor):
     def disconnectFromSimulatorAndEventHandler(self):
         try:
             print("# destroying actor", self._name)
-            self.__carlaActor.destroy()
-            print("TODO disconnect TCP connection maybe?")
-            self.__carlaActor = None
-            print("TODO disconnect from timed event handler")
             self._isConnected = False
+            TimedEventHandler().unsubscribe(self._name)
+            self.__carlaActor.destroy()
+            self.__carlaActor = None
             return True
         except:
             print("[Error][CarlaActor::disconnectFromSimulatorAndEventHandler] Unexpected error:", sys.exc_info())
@@ -150,6 +152,14 @@ class CarlaActor(Actor):
     def handleNoneEgo(self):
         self._desiredPose = self._currentPose
         self._desiredSpeed = self._desiredSpeed
+
+    def update(self, event):
+        if event is None:
+            pass  # just a normal tick
+        else:
+            raise NotImplementedError("implement update")
+
+        self._wakeUp.set()
 
     def _actorThread(self):
         print (self._name, "started acting")
@@ -191,5 +201,11 @@ class CarlaActor(Actor):
                 self._isRunning = False
 
             self._dataExchangeLock.release()
+
+            if not self._wakeUp.wait(self._timeOut):
+                print("[Error][CarlaActor::_actorThread] WakeUp Timeout")
+                self._isRunning = False
+
+            self._wakeUp.clear()
 
         print (self._name, "stopped acting")

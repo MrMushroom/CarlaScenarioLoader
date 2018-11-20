@@ -12,12 +12,10 @@ import sys
 import threading
 import time
 
-from support.singleton import Singleton
+from timed_event_handler import TimedEventHandler
 
 
-class SimulatorControl:
-    __metaclass__ = Singleton
-
+class SimulatorControl():
     def __init__(self, simName):
         self._simName = simName
         self._isConnected = False
@@ -77,9 +75,9 @@ class CarlaSimulatorControl(SimulatorControl):
 
     def disconnect(self):
         self._statusLock.acquire()
-        print("[WARNING][CarlaSimulatorControl::disconnect] disconnect not yet fully implemented into Carla 0.9.0")
         self._isRunning = False
         self._isConnected = False
+        self._client = None
         self._statusLock.release()
 
     def loadScene(self, sceneDescription):
@@ -93,5 +91,4 @@ class CarlaSimulatorControl(SimulatorControl):
         self._isRunning = True
         self._statusLock.release()
 
-        print(timestamp)
-        print("TODO invoke Observer with timestamp")
+        TimedEventHandler().updateSimStep(timestamp)

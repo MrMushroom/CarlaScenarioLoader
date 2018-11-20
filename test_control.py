@@ -9,19 +9,16 @@ import sys
 import time
 
 from support.control import InputController
-from support.singleton import Singleton
 from scenario_parser import OpenScenarioParser
 from simulator_control import CarlaSimulatorControl
+from timed_event_handler import TimedEventHandler
 
 
-class TestControl:
-    __metaclass__ = Singleton
-
+class TestControl():
     def __init__(self, simulatorType, simulatorIP, simulatorPort, simulatorTimeout, scenarioFileType):
         self.__actors = []
         self.__scenarioParser = None
         self.__simulatorControl = None
-        self.__timedEventHandler = None
         self.__logProcessor = None
         self.__simulatorIP = simulatorIP
         self.__simulatorPort = simulatorPort
@@ -42,6 +39,10 @@ class TestControl:
 
     # parses config; returns on error
     def setupTestWithConfig(self, fileName):
+        # prepare system
+        print("# prepare system")
+        TimedEventHandler().clear()
+
         # parse scenario
         print("# parse scenario")
         if not self.__scenarioParser.parseScenario(fileName):
@@ -65,13 +66,13 @@ class TestControl:
         isAllActorsConnected = True
         for actor in self.__actors:
             status = actor.connectToSimulatorAndEvenHandler(
-                self.__simulatorIP, self.__simulatorPort, self.__simulatorTimeout, self.__timedEventHandler)
+                self.__simulatorIP, self.__simulatorPort, self.__simulatorTimeout)
             isAllActorsConnected = isAllActorsConnected and status
         if not isAllActorsConnected:
             return False
 
         # setup timedEventHandler
-        print("# setup timedEventHandler - skipped (waiting for sync mode)")
+        print("# start timedEventHandler - skipped events")
 
         return True
 
@@ -86,10 +87,10 @@ class TestControl:
 
         # run Test - implement logic
         print("# run Test - implement logic!!!")
-        time.sleep(10)
+        time.sleep(2)
 
         # stop timedEventHandler
-        print("# stop timedEventHandler")
+        print("# stop timedEventHandler - skipped events")
 
         # stop actors
         print("# stop actors")

@@ -11,14 +11,11 @@ import xmlschema
 
 from pprint import pprint
 
-from support.singleton import Singleton
 from support.actor import CarlaActor
 from support.util import Action, Pose
 
 
-class ScenarioParser:
-    __metaclass__ = Singleton
-
+class ScenarioParser():
     def __init__(self, scenarioFormatFilePath):
         self._scenarioFormatFilePath = scenarioFormatFilePath
 
