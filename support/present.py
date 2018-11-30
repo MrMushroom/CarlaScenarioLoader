@@ -5,7 +5,7 @@ Inspired by carla_ros_bridge Carla 0.8.4
 
 import numpy
 import rospy
-# import tf
+import tf
 
 from math import sin, cos, sqrt, pow
 
@@ -43,15 +43,14 @@ class MondeoPlayerAgentHandler(metaclass=Singleton):
         self.steer_ratio = rospy.get_param('~steer_ratio', 14.8)
         self.max_steer_angle = rospy.get_param('~max_steer_angle', 8.2)
 
-        self.pub_odom = Publisher('vehicle/utm_odom', Odometry, queue_size=10)
-        # self.pub_tf = Publisher('tf', TransformStamped, queue_size=10)
-        self.pub_js = Publisher('/joint_states', JointState, queue_size=10)
-        self.pub_wsr = Publisher('/vehicle/wheel_speed_report', WheelSpeedReport, queue_size=10)
-        self.pub_br = Publisher('/vehicle/brake_report', BrakeReport, queue_size=10)
-        self.pub_gr = Publisher('/vehicle/gear_report', GearReport, queue_size=10)
-        self.pub_tr = Publisher('/vehicle/throttle_report', ThrottleReport, queue_size=10)
-        self.pub_sr = Publisher('/vehicle/steering_report', SteeringReport, queue_size=10)
-        rospy.init_node('carla_publisher', anonymous=True)
+        self.pub_odom = rospy.Publisher('vehicle/utm_odom', Odometry, queue_size=10)
+        # self.pub_tf = rospy.Publisher('tf', TransformStamped, queue_size=10)
+        self.pub_js = rospy.Publisher('/joint_states', JointState, queue_size=10)
+        self.pub_wsr = rospy.Publisher('/vehicle/wheel_speed_report', WheelSpeedReport, queue_size=10)
+        self.pub_br = rospy.Publisher('/vehicle/brake_report', BrakeReport, queue_size=10)
+        self.pub_gr = rospy.Publisher('/vehicle/gear_report', GearReport, queue_size=10)
+        self.pub_tr = rospy.Publisher('/vehicle/throttle_report', ThrottleReport, queue_size=10)
+        self.pub_sr = rospy.Publisher('/vehicle/steering_report', SteeringReport, queue_size=10)
 
     def process(self, carla_actor):
         """
@@ -61,8 +60,10 @@ class MondeoPlayerAgentHandler(metaclass=Singleton):
         old_control = InputController().get_old_control()
         ego_pose = carla_actor.get_transform()
         velocity = carla_actor.get_velocity()
-        forward_speed = sqrt(pow(velocity.x*velocity.x) + pow(velocity.y*velocity.y) + pow(velocity.z*velocity.z))
-        cur_time = TimedEventHandler().getCurrentSimTime()
+        forward_speed = sqrt(pow(velocity.x, 2.0) + pow(velocity.y, 2.0) + pow(velocity.z, 2.0))
+        simtime = TimedEventHandler().getCurrentSimTime()
+        cur_time = rospy.Time()
+        cur_time.set(int(simtime), int(1000000000 * (simtime - int(simtime))))
 
         # --- --- Odometry --- ---
         o = Odometry()

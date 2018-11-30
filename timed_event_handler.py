@@ -8,6 +8,7 @@
 from threading import Lock
 
 from support.singleton import Singleton
+from support.util import TimeStamp
 
 
 class TimedEventHandler(metaclass=Singleton):
@@ -23,13 +24,20 @@ class TimedEventHandler(metaclass=Singleton):
 
     def getCurrentSimTime(self):
         self.__syncLock.acquire()
-        timestamp = self.__currentSimTime
+        simtime = self.__currentSimTime
         self.__syncLock.release()
+        return simtime
+
+    def getCurrentSimTimeStamp(self):
+        self.__syncLock.acquire()
+        simtime = self.__currentSimTime
+        self.__syncLock.release()
+        timestamp = TimeStamp(int(simtime), (simtime - int(simtime))*1000000)
         return timestamp
 
     def updateSimStep(self, newSimTime):
         self.__syncLock.acquire()
-        self.__currentSimTime = newSimTime
+        self.__currentSimTime = newSimTime.platform_timestamp
         self.__notify()
         self.__syncLock.release()
 
@@ -48,4 +56,6 @@ class TimedEventHandler(metaclass=Singleton):
 
     def __notify(self):
         for subscriber, method in self.__subscribers.items():
-            method()  # TODO None dafuq
+            # check events for subscriber
+            event = None
+            method(event)

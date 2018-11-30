@@ -60,7 +60,6 @@ class InputController(object, metaclass=Singleton):
 
         self.lock_cur_control = threading.Lock()
 
-        rospy.init_node('control_listener', anonymous=True)
         rospy.Subscriber('/vehicle/brake_cmd', BrakeCmd,
                          self.recv_brake_cmd, queue_size=1)
         rospy.Subscriber('/vehicle/gear_cmd', GearCmd,

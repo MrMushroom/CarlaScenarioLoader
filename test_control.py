@@ -5,10 +5,12 @@
 # This work is licensed under the terms of the MIT license.
 # For a copy, see <https://opensource.org/licenses/MIT>.
 
+import rospy
 import sys
 import time
 
 from support.control import InputController
+from support.present import MondeoPlayerAgentHandler
 from scenario_parser import OpenScenarioParser
 from simulator_control import CarlaSimulatorControl
 from timed_event_handler import TimedEventHandler
@@ -35,7 +37,9 @@ class TestControl():
             raise NotImplementedError("Simulator of Type \"" + simulatorType + "\" is not yet supported")
 
         # ROS part, not so fancy yet
-        self.__inputController = InputController()
+        rospy.init_node('control_listener', anonymous=True)
+        InputController()
+        MondeoPlayerAgentHandler()
 
     # parses config; returns on error
     def setupTestWithConfig(self, fileName):
@@ -87,7 +91,7 @@ class TestControl():
 
         # run Test - implement logic
         print("# run Test - implement logic!!!")
-        time.sleep(2)
+        time.sleep(20)
 
         # stop timedEventHandler
         print("# stop timedEventHandler - skipped events")

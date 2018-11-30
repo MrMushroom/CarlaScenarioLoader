@@ -63,6 +63,13 @@ class Actor(IObserver, threading.Thread):
         self._desiredTimeStamp = TimeStamp()
 
     def startActing(self):
+        if self._isConnected == False:
+            print("[Error][CarlaActor::startActing]", self._name, "not connected, cannot start acting")
+            return
+        if self._isRunning == True:
+            print("[Warning][CarlaActor::startActing]", self._name, "already running")
+            return
+
         self._isRunning = True
         threading.Thread.start(self)
 
@@ -112,7 +119,7 @@ class CarlaActor(Actor):
             self.__carlaActor = self._client.get_world().try_spawn_actor(blueprint, transform)
             if self.__carlaActor is None:
                 print("TODO-FIX DEBUG: Couldn't spawn actor")
-                # raise Exception("Couldn't spawn actor")
+                # raise RuntimeError("Couldn't spawn actor")
 
             TimedEventHandler().subscribe(self._name, self.update)
             self._isConnected = True
@@ -138,7 +145,7 @@ class CarlaActor(Actor):
     def handleEgo(self):
         # send data to ROS
         print("TODO: handle ego send data to ROS")
-        MondeoPlayerAgentHandler().process(self.__carlaActor, self._currentTimeStamp)
+        MondeoPlayerAgentHandler().process(self.__carlaActor)
 
         # receive data from ROS
         if self.__inputController is None:
@@ -155,9 +162,7 @@ class CarlaActor(Actor):
         self._desiredPose = self._currentPose
         self._desiredSpeed = self._desiredSpeed
 
-    def update(self, event, timestamp):
-        self._dataExchangeLock.acquire()
-        self._currentTimeStamp = timestamp
+    def update(self, event):
         if event is None:
             pass  # just a normal tick
         else:
@@ -184,7 +189,10 @@ class CarlaActor(Actor):
                                          transform.rotation.yaw)
                 velocity = self.__carlaActor.get_velocity()
                 self._currentSpeed = math.sqrt(pow(velocity.x, 2.0) + pow(velocity.y, 2.0) + pow(velocity.z, 2.0))
+                self._currentTimeStamp = TimedEventHandler().getCurrentSimTimeStamp()
+                print(self._name, self._currentTimeStamp.getFloat(), "Pose", self._currentSpeed)
 
+                # handle data - trigger magic stuff
                 if(self._name == "Ego"):
                     self.handleEgo()
                 else:
