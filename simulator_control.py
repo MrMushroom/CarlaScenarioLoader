@@ -12,6 +12,8 @@ import sys
 import threading
 import time
 
+from support.present import ClockHandler
+
 from timed_event_handler import TimedEventHandler
 
 
@@ -92,3 +94,4 @@ class CarlaSimulatorControl(SimulatorControl):
         self._statusLock.release()
 
         TimedEventHandler().updateSimStep(timestamp)
+        ClockHandler().process()

@@ -10,7 +10,7 @@ import sys
 import time
 
 from support.control import InputController
-from support.present import MondeoPlayerAgentHandler
+from support.present import ClockHandler, MondeoPlayerAgentHandler
 from scenario_parser import OpenScenarioParser
 from simulator_control import CarlaSimulatorControl
 from timed_event_handler import TimedEventHandler
@@ -38,6 +38,7 @@ class TestControl():
 
         # ROS part, not so fancy yet
         rospy.init_node('control_listener', anonymous=True)
+        ClockHandler()
         InputController()
         MondeoPlayerAgentHandler()
 
@@ -91,7 +92,7 @@ class TestControl():
 
         # run Test - implement logic
         print("# run Test - implement logic!!!")
-        time.sleep(20)
+        time.sleep(60)
 
         # stop timedEventHandler
         print("# stop timedEventHandler - skipped events")

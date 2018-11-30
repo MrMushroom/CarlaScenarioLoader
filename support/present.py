@@ -9,8 +9,10 @@ import tf
 
 from math import sin, cos, sqrt, pow
 
+from tf2_msgs.msg import TFMessage
 from geometry_msgs.msg import TransformStamped
 from nav_msgs.msg import Odometry
+from rosgraph_msgs.msg import Clock
 from sensor_msgs.msg import JointState
 from std_msgs.msg import Header, String
 from visualization_msgs.msg import MarkerArray, Marker
@@ -24,6 +26,18 @@ from common_msgs.msg import ObjectList
 from timed_event_handler import TimedEventHandler
 from .control import InputController
 from .singleton import Singleton
+
+
+class ClockHandler(metaclass=Singleton):
+    def __init__(self):
+        self.pub_clock = rospy.Publisher('/clock', Clock, queue_size=1)
+
+    def process(self):
+        simtime = TimedEventHandler().getCurrentSimTime()
+        cur_time = rospy.Time()
+        cur_time.set(int(simtime), int(1000000000 * (simtime - int(simtime))))
+        clock = Clock(cur_time)
+        self.pub_clock.publish(clock)
 
 
 class MondeoPlayerAgentHandler(metaclass=Singleton):
@@ -44,7 +58,7 @@ class MondeoPlayerAgentHandler(metaclass=Singleton):
         self.max_steer_angle = rospy.get_param('~max_steer_angle', 8.2)
 
         self.pub_odom = rospy.Publisher('vehicle/utm_odom', Odometry, queue_size=10)
-        # self.pub_tf = rospy.Publisher('tf', TransformStamped, queue_size=10)
+        self.pub_tf = rospy.Publisher('tf', TFMessage, queue_size=10)
         self.pub_js = rospy.Publisher('/joint_states', JointState, queue_size=10)
         self.pub_wsr = rospy.Publisher('/vehicle/wheel_speed_report', WheelSpeedReport, queue_size=10)
         self.pub_br = rospy.Publisher('/vehicle/brake_report', BrakeReport, queue_size=10)
@@ -101,19 +115,21 @@ class MondeoPlayerAgentHandler(metaclass=Singleton):
 
         # --- --- TF --- ---
         # --- base_footprint ---
-        # t = TransformStamped()
-        # t.header.stamp = cur_time
-        # t.header.frame_id = "map"
-        # t.child_frame_id = "base_footprint"
-        # t.transform.translation.x = o.pose.pose.position.x
-        # t.transform.translation.y = o.pose.pose.position.y
-        # t.transform.translation.z = o.pose.pose.position.z
-        # t.transform.rotation.x = o.pose.pose.orientation.x
-        # t.transform.rotation.y = o.pose.pose.orientation.y
-        # t.transform.rotation.z = o.pose.pose.orientation.z
-        # t.transform.rotation.w = o.pose.pose.orientation.w
+        t = TransformStamped()
+        t.header.stamp = cur_time
+        t.header.frame_id = "map"
+        t.child_frame_id = "base_footprint"
+        t.transform.translation.x = o.pose.pose.position.x
+        t.transform.translation.y = o.pose.pose.position.y
+        t.transform.translation.z = o.pose.pose.position.z
+        t.transform.rotation.x = o.pose.pose.orientation.x
+        t.transform.rotation.y = o.pose.pose.orientation.y
+        t.transform.rotation.z = o.pose.pose.orientation.z
+        t.transform.rotation.w = o.pose.pose.orientation.w
         # # NOTE center-axle offset already calculated for Odometry
-        # self.pub_tf.publish(t)
+        tf_msg = []
+        tf_msg.append(t)
+        self.pub_tf.publish(TFMessage(tf_msg))
 
         # --- --- Joint States --- ---
         # TODO calculate joints
