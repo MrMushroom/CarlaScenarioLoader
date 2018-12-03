@@ -79,11 +79,19 @@ class MondeoPlayerAgentHandler(metaclass=Singleton):
         cur_time = rospy.Time()
         cur_time.set(int(simtime), int(1000000000 * (simtime - int(simtime))))
 
+        # carla to ros corrections
+        ego_pose.location.y = -ego_pose.location.y
+        ego_pose.rotation.roll = -ego_pose.rotation.roll
+        ego_pose.rotation.yaw = -ego_pose.rotation.yaw
+        velocity.y = -velocity.y
+
         # --- --- Odometry --- ---
         o = Odometry()
         o.header.stamp = cur_time
         o.header.frame_id = "utm"
         o.child_frame_id = "gps"
+
+        print(ego_pose.rotation.roll, ego_pose.rotation.pitch, ego_pose.rotation.yaw)
 
         o.pose.pose.position.x = ego_pose.location.x
         o.pose.pose.position.y = ego_pose.location.y
@@ -94,6 +102,7 @@ class MondeoPlayerAgentHandler(metaclass=Singleton):
         o.pose.pose.orientation.y = q[1]
         o.pose.pose.orientation.z = q[2]
         o.pose.pose.orientation.w = q[3]
+
         # o.pose.covariance == empty
         # calculate the center-axle offset
         A = numpy.matrix([[cos(-ego_pose.rotation.yaw), sin(-ego_pose.rotation.yaw), 0],

@@ -68,3 +68,6 @@ class Pose:
 
     def __ne__(self, other):
         return not self.__eq__(other)
+
+    def __str__(self):
+        return str(self.__x) + ", " + str(self.__y) + ", " + str(self.__z) + " " + str(self.__roll) + ", " + str(self.__pitch) + ", " + str(self.__yaw)

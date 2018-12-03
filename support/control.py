@@ -11,6 +11,7 @@ Class to handle control input
 """
 
 import carla
+import numpy
 import rospy
 import threading
 
@@ -108,7 +109,7 @@ class InputController(object, metaclass=Singleton):
         steering_angle = msg.steering_wheel_angle_cmd * self.steer_ratio
         max_steering_angle = self.max_steer_angle * self.steer_ratio
         steer = steering_angle/max_steering_angle
-        steer = np.clip(steer, -1.0, 1.0)
+        steer = numpy.clip(steer, -1.0, 1.0)
 
         self.cur_control['steer'] = -steer
 

@@ -8,6 +8,7 @@
 import abc
 import carla
 import math
+import random
 import sys
 import threading
 import time
@@ -114,9 +115,9 @@ class CarlaActor(Actor):
             print("# try spawning actor", self._name)
             blueprint = self._client.get_world().get_blueprint_library().find("vehicle.lincoln.mkz2017")
             transform = carla.Transform(
-                carla.Location(x=140.0, y=199.0, z=40.0),
-                carla.Rotation(yaw=0.0))
-            self.__carlaActor = self._client.get_world().try_spawn_actor(blueprint, transform)
+                carla.Location(x=272, y=129.5, z=40.0),
+                carla.Rotation(yaw=math.pi))
+            self.__carlaActor = self._client.get_world().spawn_actor(blueprint, transform)
             if self.__carlaActor is None:
                 print("TODO-FIX DEBUG: Couldn't spawn actor")
                 # raise RuntimeError("Couldn't spawn actor")
@@ -146,11 +147,21 @@ class CarlaActor(Actor):
         # send data to ROS
         print("TODO: handle ego send data to ROS")
         MondeoPlayerAgentHandler().process(self.__carlaActor)
+        print(self.__carlaActor.get_transform())
 
         # receive data from ROS
         if self.__inputController is None:
             self.__inputController = InputController()
         cur_control = self.__inputController.get_cur_control()
+
+        # send data to carla
+        print(cur_control)
+        cur_control["throttle"] = 0.8
+        cur_control["steer"] = 0.0
+        cur_control["brake"] = 0.0
+        cur_control["hand_brake"] = False
+        cur_control["reverse"] = False
+        print(cur_control)
         carla_vehicle_control = carla.VehicleControl(cur_control["throttle"],
                                                      cur_control["steer"],
                                                      cur_control["brake"],
@@ -158,9 +169,25 @@ class CarlaActor(Actor):
                                                      cur_control["reverse"])
         self.__carlaActor.apply_control(carla_vehicle_control)
 
+        # transform = carla.Transform(
+        #     carla.Location(x=12813, y=19023, z=3900.0),
+        #     carla.Rotation(yaw=0.0))
+        # self.__carlaActor.set_transform(transform)
+
     def handleNoneEgo(self):
+        # do magic pose stuff
         self._desiredPose = self._currentPose
         self._desiredSpeed = self._desiredSpeed
+
+        # send data to Carla
+        transform = carla.Transform(carla.Location(self._desiredPose.getPosition()[0],
+                                                   self._desiredPose.getPosition()[1],
+                                                   self._desiredPose.getPosition()[2]),
+                                    carla.Rotation(self._desiredPose.getOrientation()[1],
+                                                   self._desiredPose.getOrientation()[2],
+                                                   self._desiredPose.getOrientation()[0]))
+
+        self.__carlaActor.set_transform(transform)
 
     def update(self, event):
         if event is None:
@@ -190,23 +217,13 @@ class CarlaActor(Actor):
                 velocity = self.__carlaActor.get_velocity()
                 self._currentSpeed = math.sqrt(pow(velocity.x, 2.0) + pow(velocity.y, 2.0) + pow(velocity.z, 2.0))
                 self._currentTimeStamp = TimedEventHandler().getCurrentSimTimeStamp()
-                print(self._name, self._currentTimeStamp.getFloat(), "Pose", self._currentSpeed)
+                print(self._name, self._currentTimeStamp.getFloat(), self._currentPose, self._currentSpeed)
 
-                # handle data - trigger magic stuff
+                # handle data, send to carla - trigger magic stuff
                 if(self._name == "Ego"):
                     self.handleEgo()
                 else:
                     self.handleNonEgo()
-
-                # send data to Carla
-                transform = carla.Transform(carla.Location(self._desiredPose.getPosition()[0],
-                                                           self._desiredPose.getPosition()[1],
-                                                           self._desiredPose.getPosition()[2]),
-                                            carla.Rotation(self._desiredPose.getOrientation()[1],
-                                                           self._desiredPose.getOrientation()[2],
-                                                           self._desiredPose.getOrientation()[0]))
-
-                self.__carlaActor.set_transform(transform)
 
             except:
                 print("[Error][CarlaActor::_actorThread] Unexpected error:", sys.exc_info())
