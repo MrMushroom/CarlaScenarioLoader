@@ -47,6 +47,24 @@
             <CatalogReference catalogName="DriverCatalog" entryName="HastyDriver"/>
         </Controller>
     </Object>
+    <Object name="Target1">
+        <CatalogReference catalogName="VechicleCatalog" entryName="AudiA4_red_147kW"/>
+        <Controller>
+            <CatalogReference catalogName="DriverCatalog" entryName="DefaultDriver"/>
+        </Controller>
+    </Object>
+    <Object name="Target2">
+        <CatalogReference catalogName="VechicleCatalog" entryName="AudiA3_white_147kW"/>
+        <Controller>
+            <CatalogReference catalogName="DriverCatalog" entryName="DefaultDriver"/>
+        </Controller>
+    </Object>
+    <Object name="Target3">
+        <CatalogReference catalogName="VechicleCatalog" entryName="AudiA4_red_147kW"/>
+        <Controller>
+            <CatalogReference catalogName="DriverCatalog" entryName="DefaultDriver"/>
+        </Controller>
+    </Object>
 </Entities>
 
 <Storyboard>
@@ -65,7 +83,58 @@
                 </Action>
                 <Action>
                     <Position>
-                        <World x="0" y="10" z="9.5" h="0" p="0" r="0"/>
+                        <World x="271.5" y="129.5" z="38.5" h="3.1415926" p="0" r="0"/>
+                    </Position>
+                </Action>
+            </Private>
+            <Private object="Target1">
+                <Action>
+                    <Longitudinal>
+                        <Speed>
+                            <Dynamics shape="step" rate="0"/>
+                            <Target>
+                                <Absolute value="36.1"/>
+                            </Target>
+                        </Speed>
+                    </Longitudinal>
+                </Action>
+                <Action>
+                    <Position>
+                        <World x="280.5" y="129.5" z="38.5" h="3.1415926" p="0" r="0"/>
+                    </Position>
+                </Action>
+            </Private>
+            <Private object="Target2">
+                <Action>
+                    <Longitudinal>
+                        <Speed>
+                            <Dynamics shape="step" rate="0"/>
+                            <Target>
+                                <Absolute value="36.1"/>
+                            </Target>
+                        </Speed>
+                    </Longitudinal>
+                </Action>
+                <Action>
+                    <Position>
+                        <World x="290.5" y="129.5" z="38.5" h="3.1415926" p="0" r="0"/>
+                    </Position>
+                </Action>
+            </Private>
+            <Private object="Target3">
+                <Action>
+                    <Longitudinal>
+                        <Speed>
+                            <Dynamics shape="step" rate="0"/>
+                            <Target>
+                                <Absolute value="36.1"/>
+                            </Target>
+                        </Speed>
+                    </Longitudinal>
+                </Action>
+                <Action>
+                    <Position>
+                        <World x="300.5" y="129.5" z="38.5" h="3.1415926" p="0" r="0"/>
                     </Position>
                 </Action>
             </Private>

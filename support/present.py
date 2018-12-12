@@ -41,6 +41,47 @@ class ClockHandler(metaclass=Singleton):
         self.pub_clock.publish(clock)
 
 
+class SemanticCarlaTags(metaclass=Singleton):
+    """
+    Conforms to Carla 0.9.1
+    https://github.com/carla-simulator/carla/blob/0.9.1/Docs/cameras_and_sensors.md
+    """
+
+    def __init__(self):
+        self.__semanticCarlaTags = {
+            0: None,
+            1: "Buildings",
+            2: "Fences",
+            3: "Other",
+            4: "Pedestrians",
+            5: "Poles",
+            6: "RoadLines",
+            7: "Roads",
+            8: "Sidewalks",
+            9: "Vegetation",
+            10: "Vehicles",
+            11: "Walls",
+            12: "TrafficSigns",
+
+            "None": 0,
+            "Buildings": 1,
+            "Fences": 2,
+            "Other": 3,
+            "Pedestrians": 4,
+            "Poles": 5,
+            "RoadLines": 6,
+            "Roads": 7,
+            "Sidewalks": 8,
+            "Vegetation": 9,
+            "Vehicles": 10,
+            "Walls": 11,
+            "TrafficSigns": 12
+        }
+
+    def get(self, elem):
+        return self.__semanticCarlaTags[elem]
+
+
 class MondeoPlayerAgentHandler(metaclass=Singleton):
     """
     Convert player agent into ros message (as marker)
@@ -66,6 +107,8 @@ class MondeoPlayerAgentHandler(metaclass=Singleton):
         self.pub_gr = rospy.Publisher('/vehicle/gear_report', GearReport, queue_size=10)
         self.pub_tr = rospy.Publisher('/vehicle/throttle_report', ThrottleReport, queue_size=10)
         self.pub_sr = rospy.Publisher('/vehicle/steering_report', SteeringReport, queue_size=10)
+
+        self.pub_ol = rospy.Publisher('/carla/object_list', ObjectList, queue_size=10)
 
     def process(self, carla_actor):
         """
@@ -96,8 +139,6 @@ class MondeoPlayerAgentHandler(metaclass=Singleton):
         o.header.stamp = cur_time
         o.header.frame_id = "utm"
         o.child_frame_id = "gps"
-
-        print(ego_pose.rotation.roll, ego_pose.rotation.pitch, ego_pose.rotation.yaw)
 
         o.pose.pose.position.x = ego_pose.location.x
         o.pose.pose.position.y = ego_pose.location.y
@@ -206,55 +247,211 @@ class MondeoPlayerAgentHandler(metaclass=Singleton):
         sr.steering_wheel_angle_cmd = steer * self.max_steer_angle
         self.pub_sr.publish(sr)
 
-    # def processGodSensor(self, carla_actor)
-    #     """
-    #     first odom, then tf, then Reports
-    #     """
-    #     # --- --- Get Data --- ---
-    #     old_control = InputController().get_old_control()
-    #     ego_pose = carla_actor.get_transform()
-    #     velocity = carla_actor.get_velocity()
-    #     forward_speed = sqrt(pow(velocity.x, 2.0) + pow(velocity.y, 2.0) + pow(velocity.z, 2.0))
-    #     simtime = TimedEventHandler().getCurrentSimTime()
-    #     cur_time = rospy.Time()
-    #     cur_time.set(int(simtime), int(1000000000 * (simtime - int(simtime))))
-    #     header = Header(stamp=cur_time, frame_id='map')
-    #     source = String(data="sim_carla")
+    def processGodSensor(self, carla_actor):
+        """
 
-    #     vehicles = [(self.get_marker_id(agent.id), agent.vehicle)
-    #                 for agent in data if agent.HasField('vehicle')]
-    #     pedestrians = [(self.get_marker_id(agent.id), agent.pedestrian)
-    #                    for agent in data if agent.HasField('pedestrian')]
-    #     traffic_lights = [(self.get_marker_id(agent.id), agent.traffic_light)
-    #                       for agent in data if agent.HasField('traffic_light')]
-    #     speed_limit_signs = [(self.get_marker_id(agent.id), agent.speed_limit_sign)
-    #                          for agent in data if agent.HasField('speed_limit_sign')]
+        """
+        # --- --- Get Data --- ---
+        simtime = TimedEventHandler().getCurrentSimTime()
+        cur_time = rospy.Time()
+        cur_time.set(int(simtime), int(1000000000 * (simtime - int(simtime))))
+        header = Header(stamp=cur_time, frame_id='map')
+        source = String(data="sim_carla")
 
-    #     # marker arrays
-    #     pedestrian_markers = [
-    #         get_pedestrian_marker(pedestrian, header, agent_id)
-    #         for agent_id, pedestrian in pedestrians
-    #     ]
-    #     vehicle_markers = [
-    #         get_vehicle_marker(vehicle, header, agent_id)
-    #         for agent_id, vehicle in vehicles
-    #     ]
+        # --- --- Filter Data Semantically --- ---
+        vehicles = [(actor.id, actor)
+                    for actor in carla_actor.get_world().get_actors() if SemanticCarlaTags().get("Vehicles") in actor.semantic_tags and actor.id != carla_actor.id]
+        pedestrians = [(actor.id, actor)
+                       for actor in carla_actor.get_world().get_actors() if SemanticCarlaTags().get("Pedestrians") in actor.semantic_tags]
+        traffic_lights = [(actor.id, actor)
+                          for actor in carla_actor.get_world().get_actors() if SemanticCarlaTags().get("TrafficSigns") in actor.semantic_tags and actor.type_id == "traffic.traffic_light"]
+        speed_limit_signs = [(actor.id, actor)
+                             for actor in carla_actor.get_world().get_actors() if SemanticCarlaTags().get("TrafficSigns") in actor.semantic_tags and actor.type_id.startswith("traffic.speed_limit.")]
 
-    #     # get agents as DetectedObject[]
-    #     detected_pedestrians = [
-    #         get_detected_pedestrian(pedestrian, pedestrian_id)
-    #         for pedestrian_id, pedestrian in pedestrians
-    #     ]
-    #     detected_vehicles = [
-    #         get_detected_vehicle(vehicle, vehicle_id)
-    #         for vehicle_id, vehicle in vehicles
-    #     ]
-    #     detected_objects = detected_pedestrians + detected_vehicles
+        # --- --- Filter Data with Detection Logic --- ---
+        detected_vehicles = [
+            getDetectedVehicle(vehicle, vehicle_id)
+            for vehicle_id, vehicle in vehicles
+        ]
+        detected_pedestrians = [
+            get_detected_pedestrian(pedestrian, pedestrian_id)
+            for pedestrian_id, pedestrian in pedestrians
+        ]
 
-    #     # publish those msgs
-    #     self.process_msg_fun('carla/pedestrians',
-    #                          MarkerArray(pedestrian_markers))
-    #     self.process_msg_fun('carla/vehicles',
-    #                          MarkerArray(vehicle_markers))
-    #     self.process_msg_fun('carla/object_list',
-    #                          ObjectList(header=header, source=source, objects=detected_objects))
+        # --- --- Publish Data --- ---
+        detected_objects = detected_vehicles + detected_pedestrians  # + detected_traffic_lights + detected_speed_limit_signs
+        object_list = ObjectList(header=header, source=source, objects=detected_objects)
+        self.pub_ol.publish(object_list)
+
+
+def get_detected_pedestrian(actor, actor_id):
+    """
+    Return a DetectedObject msg
+
+    :param object: carla agent object (pb2 object (vehicle, pedestrian or traffic light))
+    :param object_id: id of the detected object (int32)
+    :return: a ros DetectedObject msg
+    """
+    # --- --- Get Data from Carla --- ---
+    actor_pose = actor.get_transform()
+    velocity = actor.get_velocity()
+    forward_speed = sqrt(pow(velocity.x, 2.0) + pow(velocity.y, 2.0) + pow(velocity.z, 2.0))
+    bounding_box = actor.bounding_box
+
+    # carla to ros corrections
+    # actor_pose.location.x = actor_pose.location.x
+    actor_pose.location.y = -actor_pose.location.y
+    # actor_pose.location.z = actor_pose.location.z
+    actor_pose.rotation.roll = -math.radians(actor_pose.rotation.roll)
+    actor_pose.rotation.pitch = math.radians(actor_pose.rotation.pitch)
+    actor_pose.rotation.yaw = -math.radians(actor_pose.rotation.yaw)
+    # velocity.x = velocity.x
+    velocity.y = -velocity.y
+    # velocity.z = velocity.z
+
+    # --- --- Fill Data Into DetectedObject --- ---
+    # --- Fill Default ---
+    detected_pedestrian = DetectedObject()
+    detected_pedestrian.id = actor_id  # unique id of the simulation
+
+    # --- Fill Likelihood ---
+    # we know its there
+    detected_pedestrian.existence_probability = 1.0
+    detected_pedestrian.class_probability.prob_bicycle = 0
+    detected_pedestrian.class_probability.prob_car = 0
+    detected_pedestrian.class_probability.prob_motorbike = 0
+    detected_pedestrian.class_probability.prob_truck = 0
+    detected_pedestrian.class_probability.prob_pedestrian = 1.0
+    detected_pedestrian.class_probability.prob_stationary = 0
+
+    # --- Fill Pose ---
+    detected_pedestrian.reference_point = 1  # center
+
+    detected_pedestrian.object.pose.pose.position.x = actor_pose.location.x
+    detected_pedestrian.object.pose.pose.position.y = actor_pose.location.y
+    detected_pedestrian.object.pose.pose.position.z = actor_pose.location.z
+    q = tf.transformations.quaternion_from_euler(
+        actor_pose.rotation.roll, actor_pose.rotation.pitch, actor_pose.rotation.yaw)  # RPY
+    detected_pedestrian.object.pose.pose.orientation.x = q[0]
+    detected_pedestrian.object.pose.pose.orientation.y = q[1]
+    detected_pedestrian.object.pose.pose.orientation.z = q[2]
+    detected_pedestrian.object.pose.pose.orientation.w = q[3]
+    detected_pedestrian.object.pose.pose.position.z += bounding_box.location.z
+    # detected_pedestrian.object.pose.covariance == empty
+    detected_pedestrian.object.valid_pose = True
+    detected_pedestrian.object.valid_orientation = True
+
+    # --- Fill Orientation (redundant) ---
+    detected_pedestrian.object.orientation_angle.x = actor_pose.rotation.pitch
+    detected_pedestrian.object.orientation_angle.y = actor_pose.rotation.roll
+    detected_pedestrian.object.orientation_angle.z = actor_pose.rotation.yaw
+    detected_pedestrian.object.valid_orientation_angle = True
+
+    # --- Fill Bounding Box ---
+    detected_pedestrian.object.dimension.x = bounding_box.extent.x * 2.0
+    detected_pedestrian.object.dimension.y = bounding_box.extent.y * 2.0
+    detected_pedestrian.object.dimension.z = bounding_box.extent.z * 2.0
+    detected_pedestrian.object.valid_dimension = True
+
+    # --- Fill Twist ---
+    detected_pedestrian.object.twist.twist.linear.x = velocity.x
+    detected_pedestrian.object.twist.twist.linear.y = velocity.y
+    detected_pedestrian.object.twist.twist.linear.z = velocity.z
+    # detected_pedestrian.object.twist.twist.angular -> not available
+    # detected_pedestrian.object.twist.covariance -> empty
+    detected_pedestrian.object.valid_twist = True
+
+    # detected_pedestrian.object.accel # available with get_acceleration()
+    detected_vehicle.object.valid_acceleration = False
+
+    detected_pedestrian.age = 0  # TODO its new?
+    detected_pedestrian.prediction_age = 0  # TODO its new?
+
+    return detected_pedestrian
+
+
+def getDetectedVehicle(actor, actor_id):
+    """
+    Return a DetectedObject msg
+
+    :param actor: carla actor (vehicle, pedestrian, traffic light, ...)
+    :param actor_id: id of the detected object
+    :return: a ros DetectedObject msg
+    """
+    # --- --- Get Data from Carla --- ---
+    actor_pose = actor.get_transform()
+    velocity = actor.get_velocity()
+    forward_speed = sqrt(pow(velocity.x, 2.0) + pow(velocity.y, 2.0) + pow(velocity.z, 2.0))
+    bounding_box = actor.bounding_box
+
+    # carla to ros corrections
+    # actor_pose.location.x = actor_pose.location.x
+    actor_pose.location.y = -actor_pose.location.y
+    # actor_pose.location.z = actor_pose.location.z
+    actor_pose.rotation.roll = -math.radians(actor_pose.rotation.roll)
+    actor_pose.rotation.pitch = math.radians(actor_pose.rotation.pitch)
+    actor_pose.rotation.yaw = -math.radians(actor_pose.rotation.yaw)
+    # velocity.x = velocity.x
+    velocity.y = -velocity.y
+    # velocity.z = velocity.z
+
+    # --- --- Fill Data Into DetectedObject --- ---
+    # --- Fill Default ---
+    detected_vehicle = DetectedObject()
+    detected_vehicle.id = actor_id  # unique id of the simulation
+
+    # --- Fill Likelihood ---
+    # we know its there, but we cannot say which type of vehicle it is
+    # OPTIMIZE maybe calculate better likelihood via bounding box or blueprint name
+    detected_vehicle.existence_probability = 1.0
+    detected_vehicle.class_probability.prob_bicycle = 0.25
+    detected_vehicle.class_probability.prob_car = 0.25
+    detected_vehicle.class_probability.prob_motorbike = 0.25
+    detected_vehicle.class_probability.prob_truck = 0.25
+    detected_vehicle.class_probability.prob_pedestrian = 0
+    detected_vehicle.class_probability.prob_stationary = 0
+
+    # --- Fill Pose ---
+    detected_vehicle.reference_point = 1  # center
+
+    detected_vehicle.object.pose.pose.position.x = actor_pose.location.x
+    detected_vehicle.object.pose.pose.position.y = actor_pose.location.y
+    detected_vehicle.object.pose.pose.position.z = actor_pose.location.z
+    q = tf.transformations.quaternion_from_euler(
+        actor_pose.rotation.roll, actor_pose.rotation.pitch, actor_pose.rotation.yaw)  # RPY
+    detected_vehicle.object.pose.pose.orientation.x = q[0]
+    detected_vehicle.object.pose.pose.orientation.y = q[1]
+    detected_vehicle.object.pose.pose.orientation.z = q[2]
+    detected_vehicle.object.pose.pose.orientation.w = q[3]
+    detected_vehicle.object.pose.pose.position.z += bounding_box.extent.z
+    # detected_vehicle.object.pose.covariance == empty
+    detected_vehicle.object.valid_pose = True
+    detected_vehicle.object.valid_orientation = True
+
+    # --- Fill Orientation (redundant) ---
+    detected_vehicle.object.orientation_angle.x = actor_pose.rotation.pitch
+    detected_vehicle.object.orientation_angle.y = actor_pose.rotation.roll
+    detected_vehicle.object.orientation_angle.z = actor_pose.rotation.yaw
+    detected_vehicle.object.valid_orientation_angle = True
+
+    # --- Fill Bounding Box ---
+    detected_vehicle.object.dimension.x = bounding_box.extent.x * 2.0
+    detected_vehicle.object.dimension.y = bounding_box.extent.y * 2.0
+    detected_vehicle.object.dimension.z = bounding_box.extent.z * 2.0
+    detected_vehicle.object.valid_dimension = True
+
+    # --- Fill Twist ---
+    detected_vehicle.object.twist.twist.linear.x = velocity.x
+    detected_vehicle.object.twist.twist.linear.y = velocity.y
+    detected_vehicle.object.twist.twist.linear.z = velocity.z
+    # detected_vehicle.object.twist.twist.angular -> not available
+    # detected_vehicle.object.twist.covariance -> empty
+    detected_vehicle.object.valid_twist = True
+
+    # detected_vehicle.object.accel # available with get_acceleration(), but we only set Pose
+    detected_vehicle.object.valid_acceleration = False
+
+    detected_vehicle.age = 0  # TODO its new?
+    detected_vehicle.prediction_age = 0  # TODO its new?
+
+    return detected_vehicle

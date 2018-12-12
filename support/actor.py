@@ -114,9 +114,14 @@ class CarlaActor(Actor):
             self._client.set_timeout(timeout)
             print("# try spawning actor", self._name)
             blueprint = self._client.get_world().get_blueprint_library().find("vehicle.lincoln.mkz2017")
+            # blueprint = self._client.get_world().get_blueprint_library().find("vehicle.ford.mustang")
             transform = carla.Transform(
-                carla.Location(x=271.5, y=129.5, z=40.0),
-                carla.Rotation(yaw=math.degrees(math.pi)))
+                carla.Location(x=self._desiredPose.getPosition()[0],
+                               y=self._desiredPose.getPosition()[1],
+                               z=self._desiredPose.getPosition()[2]),
+                carla.Rotation(roll=math.degrees(self._desiredPose.getOrientation()[0]),
+                               pitch=math.degrees(self._desiredPose.getOrientation()[1]),
+                               yaw=math.degrees(self._desiredPose.getOrientation()[2])))
             self.__carlaActor = self._client.get_world().spawn_actor(blueprint, transform)
             if self.__carlaActor is None:
                 print("TODO-FIX DEBUG: Couldn't spawn actor")
@@ -145,9 +150,8 @@ class CarlaActor(Actor):
 
     def handleEgo(self):
         # send data to ROS
-        print("TODO: handle ego send data to ROS")
         MondeoPlayerAgentHandler().process(self.__carlaActor)
-        # MondeoPlayerAgentHandler().processGodSensor(self.__carlaActor)
+        MondeoPlayerAgentHandler().processGodSensor(self.__carlaActor)
 
         # receive data from ROS
         if self.__inputController is None:
@@ -161,11 +165,6 @@ class CarlaActor(Actor):
                                                      cur_control["hand_brake"],
                                                      cur_control["reverse"])
         self.__carlaActor.apply_control(carla_vehicle_control)
-
-        # transform = carla.Transform(
-        #     carla.Location(x=12813, y=19023, z=3900.0),
-        #     carla.Rotation(yaw=0.0))
-        # self.__carlaActor.set_transform(transform)
 
     def handleNoneEgo(self):
         # do magic pose stuff
