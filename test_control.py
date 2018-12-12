@@ -92,7 +92,7 @@ class TestControl():
 
         # run Test - implement logic
         print("# run Test - implement logic!!!")
-        time.sleep(5)
+        time.sleep(120)
 
         # stop timedEventHandler
         print("# stop timedEventHandler - skipped events")

@@ -66,7 +66,7 @@ class CarlaSimulatorControl(SimulatorControl):
         try:
             self._client = carla.Client(self._simIP, self._simPort)
             self._client.set_timeout(self._simTimeout)
-            print(self._client.get_server_version())
+            print("[INFO] Connecting", self._client.get_client_version(), "to", self._client.get_server_version())
             self._isConnected = True
             self.run()
             return True

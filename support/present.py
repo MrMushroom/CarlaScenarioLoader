@@ -3,6 +3,7 @@ Classes to handle Agent object (player and non-player)
 Inspired by carla_ros_bridge Carla 0.8.4
 """
 
+import math
 import numpy
 import rospy
 import tf
@@ -80,10 +81,15 @@ class MondeoPlayerAgentHandler(metaclass=Singleton):
         cur_time.set(int(simtime), int(1000000000 * (simtime - int(simtime))))
 
         # carla to ros corrections
+        # ego_pose.location.x = ego_pose.location.x
         ego_pose.location.y = -ego_pose.location.y
-        ego_pose.rotation.roll = -ego_pose.rotation.roll
-        ego_pose.rotation.yaw = -ego_pose.rotation.yaw
+        # ego_pose.location.z = ego_pose.location.z
+        ego_pose.rotation.roll = -math.radians(ego_pose.rotation.roll)
+        ego_pose.rotation.pitch = math.radians(ego_pose.rotation.pitch)
+        ego_pose.rotation.yaw = -math.radians(ego_pose.rotation.yaw)
+        # velocity.x = velocity.x
         velocity.y = -velocity.y
+        # velocity.z = velocity.z
 
         # --- --- Odometry --- ---
         o = Odometry()
@@ -102,8 +108,8 @@ class MondeoPlayerAgentHandler(metaclass=Singleton):
         o.pose.pose.orientation.y = q[1]
         o.pose.pose.orientation.z = q[2]
         o.pose.pose.orientation.w = q[3]
-
         # o.pose.covariance == empty
+
         # calculate the center-axle offset
         A = numpy.matrix([[cos(-ego_pose.rotation.yaw), sin(-ego_pose.rotation.yaw), 0],
                           [-sin(-ego_pose.rotation.yaw), cos(-ego_pose.rotation.yaw), 0],
@@ -199,3 +205,56 @@ class MondeoPlayerAgentHandler(metaclass=Singleton):
         sr.steering_wheel_angle = steer * self.max_steer_angle
         sr.steering_wheel_angle_cmd = steer * self.max_steer_angle
         self.pub_sr.publish(sr)
+
+    # def processGodSensor(self, carla_actor)
+    #     """
+    #     first odom, then tf, then Reports
+    #     """
+    #     # --- --- Get Data --- ---
+    #     old_control = InputController().get_old_control()
+    #     ego_pose = carla_actor.get_transform()
+    #     velocity = carla_actor.get_velocity()
+    #     forward_speed = sqrt(pow(velocity.x, 2.0) + pow(velocity.y, 2.0) + pow(velocity.z, 2.0))
+    #     simtime = TimedEventHandler().getCurrentSimTime()
+    #     cur_time = rospy.Time()
+    #     cur_time.set(int(simtime), int(1000000000 * (simtime - int(simtime))))
+    #     header = Header(stamp=cur_time, frame_id='map')
+    #     source = String(data="sim_carla")
+
+    #     vehicles = [(self.get_marker_id(agent.id), agent.vehicle)
+    #                 for agent in data if agent.HasField('vehicle')]
+    #     pedestrians = [(self.get_marker_id(agent.id), agent.pedestrian)
+    #                    for agent in data if agent.HasField('pedestrian')]
+    #     traffic_lights = [(self.get_marker_id(agent.id), agent.traffic_light)
+    #                       for agent in data if agent.HasField('traffic_light')]
+    #     speed_limit_signs = [(self.get_marker_id(agent.id), agent.speed_limit_sign)
+    #                          for agent in data if agent.HasField('speed_limit_sign')]
+
+    #     # marker arrays
+    #     pedestrian_markers = [
+    #         get_pedestrian_marker(pedestrian, header, agent_id)
+    #         for agent_id, pedestrian in pedestrians
+    #     ]
+    #     vehicle_markers = [
+    #         get_vehicle_marker(vehicle, header, agent_id)
+    #         for agent_id, vehicle in vehicles
+    #     ]
+
+    #     # get agents as DetectedObject[]
+    #     detected_pedestrians = [
+    #         get_detected_pedestrian(pedestrian, pedestrian_id)
+    #         for pedestrian_id, pedestrian in pedestrians
+    #     ]
+    #     detected_vehicles = [
+    #         get_detected_vehicle(vehicle, vehicle_id)
+    #         for vehicle_id, vehicle in vehicles
+    #     ]
+    #     detected_objects = detected_pedestrians + detected_vehicles
+
+    #     # publish those msgs
+    #     self.process_msg_fun('carla/pedestrians',
+    #                          MarkerArray(pedestrian_markers))
+    #     self.process_msg_fun('carla/vehicles',
+    #                          MarkerArray(vehicle_markers))
+    #     self.process_msg_fun('carla/object_list',
+    #                          ObjectList(header=header, source=source, objects=detected_objects))

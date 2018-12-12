@@ -115,8 +115,8 @@ class CarlaActor(Actor):
             print("# try spawning actor", self._name)
             blueprint = self._client.get_world().get_blueprint_library().find("vehicle.lincoln.mkz2017")
             transform = carla.Transform(
-                carla.Location(x=272, y=129.5, z=40.0),
-                carla.Rotation(yaw=math.pi))
+                carla.Location(x=271.5, y=129.5, z=40.0),
+                carla.Rotation(yaw=math.degrees(math.pi)))
             self.__carlaActor = self._client.get_world().spawn_actor(blueprint, transform)
             if self.__carlaActor is None:
                 print("TODO-FIX DEBUG: Couldn't spawn actor")
@@ -147,7 +147,7 @@ class CarlaActor(Actor):
         # send data to ROS
         print("TODO: handle ego send data to ROS")
         MondeoPlayerAgentHandler().process(self.__carlaActor)
-        print(self.__carlaActor.get_transform())
+        # MondeoPlayerAgentHandler().processGodSensor(self.__carlaActor)
 
         # receive data from ROS
         if self.__inputController is None:
@@ -155,13 +155,6 @@ class CarlaActor(Actor):
         cur_control = self.__inputController.get_cur_control()
 
         # send data to carla
-        print(cur_control)
-        cur_control["throttle"] = 0.8
-        cur_control["steer"] = 0.0
-        cur_control["brake"] = 0.0
-        cur_control["hand_brake"] = False
-        cur_control["reverse"] = False
-        print(cur_control)
         carla_vehicle_control = carla.VehicleControl(cur_control["throttle"],
                                                      cur_control["steer"],
                                                      cur_control["brake"],
@@ -183,9 +176,9 @@ class CarlaActor(Actor):
         transform = carla.Transform(carla.Location(self._desiredPose.getPosition()[0],
                                                    self._desiredPose.getPosition()[1],
                                                    self._desiredPose.getPosition()[2]),
-                                    carla.Rotation(self._desiredPose.getOrientation()[1],
-                                                   self._desiredPose.getOrientation()[2],
-                                                   self._desiredPose.getOrientation()[0]))
+                                    carla.Rotation(math.degrees(self._desiredPose.getOrientation()[1]),
+                                                   math.degrees(self._desiredPose.getOrientation()[2]),
+                                                   math.degrees(self._desiredPose.getOrientation()[0])))
 
         self.__carlaActor.set_transform(transform)
 
@@ -211,9 +204,9 @@ class CarlaActor(Actor):
                 self._currentPose = Pose(transform.location.x,
                                          transform.location.y,
                                          transform.location.z,
-                                         transform.rotation.roll,
-                                         transform.rotation.pitch,
-                                         transform.rotation.yaw)
+                                         math.radians(transform.rotation.roll),
+                                         math.radians(transform.rotation.pitch),
+                                         math.radians(transform.rotation.yaw))
                 velocity = self.__carlaActor.get_velocity()
                 self._currentSpeed = math.sqrt(pow(velocity.x, 2.0) + pow(velocity.y, 2.0) + pow(velocity.z, 2.0))
                 self._currentTimeStamp = TimedEventHandler().getCurrentSimTimeStamp()
