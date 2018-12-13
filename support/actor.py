@@ -13,6 +13,8 @@ import sys
 import threading
 import time
 
+from collections import deque
+
 from .control import InputController
 from .observer import IObserver
 from .present import MondeoPlayerAgentHandler
@@ -65,10 +67,10 @@ class Actor(IObserver, threading.Thread):
 
     def startActing(self):
         if self._isConnected == False:
-            print("[Error][CarlaActor::startActing]", self._name, "not connected, cannot start acting")
+            print("[Error][Actor::startActing]", self._name, "not connected, cannot start acting")
             return
         if self._isRunning == True:
-            print("[Warning][CarlaActor::startActing]", self._name, "already running")
+            print("[Warning][Actor::startActing]", self._name, "already running")
             return
 
         self._isRunning = True
@@ -80,7 +82,7 @@ class Actor(IObserver, threading.Thread):
 
     # threading.Thread mehtods
     def start(self):
-        print("[INFO][CarlaActor::start] Don't use this")
+        print("[INFO][Actor::start] Don't use this")
         self.startActing()
 
     def run(self):
@@ -103,7 +105,7 @@ class Actor(IObserver, threading.Thread):
 
 
 class CarlaActor(Actor):
-    def __init__(self, actorType, name, events=[], enableLogging=False, pose=None, speed=None, timestamp=None):
+    def __init__(self, actorType, name, events=deque(), enableLogging=False, pose=None, speed=None, timestamp=None):
         Actor.__init__(self, actorType, name, events, enableLogging, pose, speed, timestamp)
         self.__carlaActor = None
         self.__inputController = None
@@ -166,13 +168,17 @@ class CarlaActor(Actor):
                                                      cur_control["reverse"])
         self.__carlaActor.apply_control(carla_vehicle_control)
 
-    def handleNoneEgo(self):
+    def handleNonEgo(self):
         # do magic pose stuff
         self._desiredPose = self._currentPose
-        self._desiredSpeed = self._desiredSpeed
+        speedMS = self._desiredSpeed * 1000.0 / 3600
+        diffS = TimedEventHandler().getSimTimeDiff()
+        distanceM = speedMS * diffS
+
+        # TODO event handling / route calculation goes here
 
         # send data to Carla
-        transform = carla.Transform(carla.Location(self._desiredPose.getPosition()[0],
+        transform = carla.Transform(carla.Location(self._desiredPose.getPosition()[0] - distanceM,
                                                    self._desiredPose.getPosition()[1],
                                                    self._desiredPose.getPosition()[2]),
                                     carla.Rotation(math.degrees(self._desiredPose.getOrientation()[1]),
@@ -209,7 +215,7 @@ class CarlaActor(Actor):
                 velocity = self.__carlaActor.get_velocity()
                 self._currentSpeed = math.sqrt(pow(velocity.x, 2.0) + pow(velocity.y, 2.0) + pow(velocity.z, 2.0))
                 self._currentTimeStamp = TimedEventHandler().getCurrentSimTimeStamp()
-                print(self._name, self._currentTimeStamp.getFloat(), self._currentPose, self._currentSpeed)
+                # print(self._name, self._currentTimeStamp.getFloat(), self._currentPose, self._currentSpeed)
 
                 # handle data, send to carla - trigger magic stuff
                 if(self._name == "Ego"):

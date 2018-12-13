@@ -14,6 +14,7 @@ from support.util import TimeStamp
 class TimedEventHandler(metaclass=Singleton):
     def __init__(self):
         self.__currentSimTime = None
+        self.__previousSimTime = None
         self.__events = None
         self.__subscribers = {}
         self.__syncLock = Lock()
@@ -35,8 +36,18 @@ class TimedEventHandler(metaclass=Singleton):
         timestamp = TimeStamp(int(simtime), (simtime - int(simtime))*1000000)
         return timestamp
 
+    def getSimTimeDiff(self):
+        self.__syncLock.acquire()
+        if self.__previousSimTime is None:
+            timeDiff = None
+        else:
+            timeDiff = self.__currentSimTime - self.__previousSimTime
+        self.__syncLock.release()
+        return timeDiff
+
     def updateSimStep(self, newSimTime):
         self.__syncLock.acquire()
+        self.__previousSimTime = self.__currentSimTime
         self.__currentSimTime = newSimTime.platform_timestamp
         self.__notify()
         self.__syncLock.release()

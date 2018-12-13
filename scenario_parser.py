@@ -204,15 +204,18 @@ class OpenScenarioParser(ScenarioParser):
         return True
 
     def _processSimTimeEvents(self):
-        print("[INFO][ScenarioParser::_processSimTimeEvents] No timed events supported yet")
+        # TODO process SimTimeEvents here
+        print("# TODO process SimTimeEvents here")
         return True
 
     def _processStateEvents(self):
-        print("[INFO][ScenarioParser::_processSimTimeEvents] No state events supported yet")
+        # TODO process StateEvents here
+        print("# TODO process StateEvents here")
         return True
 
     def _processSceneDescription(self):
-        print("[INFO][ScenarioParser::_processSimTimeEvents] No scene description supported yet")
+        # TODO process SceneDescription here
+        print("# TODO process SceneDescription here")
         return True
 
     def _parseSpeedAndPoseFromAction(self, action):

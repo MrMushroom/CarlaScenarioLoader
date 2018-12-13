@@ -39,6 +39,7 @@ def main():
             # Simulation is executed
             testControl.cleanupTest()
             # Simulation environment is stopped
+            print(" --- The End ---")
 
         else:
             print("[Error] third parameter has to be a valid filepath")
