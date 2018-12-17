@@ -5,35 +5,57 @@
 # This work is licensed under the terms of the MIT license.
 # For a copy, see <https://opensource.org/licenses/MIT>.
 
+from .util import Action
+
 
 class Event:
-    def __init__(self):
-        self.__action = None
+    def __init__(self, action, startCondition=None):
+        self.__action = action
+        self.__startCondition = startCondition
 
     def getAction(self):
-        raise NotImplementedError("implement getAction")
+        return self.__action
+
+    def getStartCondition(self):
+        return self.__startCondition
 
 
 class SimTimeEvent(Event):
-    def __init__(self):
-        Event.__init__(self)
+    def __init__(self, action, startCondition):
+        Event.__init__(self, action)
 
-        self.__time = None
+        self.__time = action.timestamp
 
     def getEventTime(self):
-        raise NotImplementedError("implement getEventTime")
+        self.__time
 
 
 class StateEvent(Event):
-    def __init__(self):
-        Event.__init__(self)
+    def __init__(self, action, startCondition):
+        Event.__init__(self, action)
 
 
 class EntityEvent(Event):
-    def __init__(self):
-        Event.__init__(self)
+    def __init__(self, action, actors, startCondition):
+        Event.__init__(self, action)
 
-        self.__actors = []
+        self.__actors = actors
 
     def getActors(self):
-        raise NotImplementedError("implement getActors")
+        return self.__actors
+
+
+class StartCondition:
+    def __init__(self):
+        self.priority = None
+
+        # timing
+        self.delay = None
+        self.edge = None
+
+        # ByEntity
+        self.triggeringEntity = None
+
+        # ReachPosition
+        self.pose_tolerance = None
+        self.pose = None

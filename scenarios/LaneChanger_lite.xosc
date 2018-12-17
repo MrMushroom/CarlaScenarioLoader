@@ -142,31 +142,39 @@
     </Init>
     <Story name="MyStory" owner="Target1">
         <Act name="MyAct">
-            <Sequence name="MySequence" numberOfExecutions="1">
+            <Sequence name="Sequence1" numberOfExecutions="1">
                 <Actors>
-                    <Entity name="$owner"/>
+                    <Entity name="A1"/>
                 </Actors>
-                <Maneuver name="MyLaneChangeManeuver">
-                    <Event name="MyLaneChangeEvent" priority="overwrite">
-                        <Action name="MyLaneChangeAction">
+                <Maneuver name="Maneuver1">
+                    <Event name="Event1" priority="overwrite">
+                        <Action name="Action1">
                             <Private>
-                                <Routing>
-                                    <FollowTrajectory>
-                                        <CatalogReference catalogName="TrajectoryCatalog" entryName="MyLaneChangeTrajectory"/>
-                                        <Longitudinal>
-                                            <None/>
-                                        </Longitudinal>
-                                        <Lateral purpose="steering"/>
-                                    </FollowTrajectory>
-                                </Routing>
+                                <Longitudinal>
+                                    <Speed>
+                                        <Dynamics shape="linear" rate="1.0"/>
+                                        <Target>
+                                            <Absolute value="20.0"/>
+                                        </Target>
+                                    </Speed>
+                                </Longitudinal>
                             </Private>
                         </Action>
                         <StartConditions>
                             <ConditionGroup>
-                                <Condition name="MyStartCondition" delay="0" edge="rising">
-                                    <ByState>
-                                        <AtStart type="act" name="MyAct"/>
-                                    </ByState>
+                                <Condition name="StartCondition1" delay="0" edge="rising">
+                                    <ByEntity>
+                                        <TriggeringEntities rule="any">
+                                            <Entity name="A1"/>
+                                        </TriggeringEntities>
+                                        <EntityCondition>
+                                            <ReachPosition tolerance="10.0">
+												<Position>
+													<World x="300.5" y="129.5" z="38.5" h="3.1415926" p="0" r="0"/>
+												</Position>
+											</ReachPosition>
+                                        </EntityCondition>
+                                    </ByEntity>
                                 </Condition>
                             </ConditionGroup>
                         </StartConditions>

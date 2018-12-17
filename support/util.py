@@ -7,7 +7,13 @@
 
 
 class Action:
-    pass
+    def __init__(self, pose=None, timestamp=None):
+        self.pose = pose
+        self.timestamp = timestamp
+
+        self.longitudinal_speed = None
+        self.longitudinal_dynamics_rate = None
+        self.longitudinal_dynamics_shape = None
 
 
 class EntityCondition:

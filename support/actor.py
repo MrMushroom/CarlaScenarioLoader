@@ -18,7 +18,7 @@ from collections import deque
 from .control import InputController
 from .observer import IObserver
 from .present import MondeoPlayerAgentHandler
-from .util import Pose, TimeStamp
+from .util import Action, Pose, TimeStamp
 from timed_event_handler import TimedEventHandler
 
 
@@ -109,6 +109,7 @@ class CarlaActor(Actor):
         Actor.__init__(self, actorType, name, events, enableLogging, pose, speed, timestamp)
         self.__carlaActor = None
         self.__inputController = None
+        self.__actionQueue = None
 
     def connectToSimulatorAndEvenHandler(self, ipAddress, port, timeout):
         try:
@@ -150,6 +151,27 @@ class CarlaActor(Actor):
             self._isConnected = False
             return False
 
+    def addEntityEvent(self, event):
+        self._events.append(event)
+
+    def handleActionQueue(self):
+        # check if queue full
+        if self.__actionQueue is not None:
+            if len(self.__actionQueue) > 0:
+                return len(self.__actionQueue)
+
+        # queue empty or not initialized
+        self.__actionQueue = deque([])
+
+        # TODO implement magic action queue stuff
+        # check startconditions for events
+        print("# TODO implement magic action queue stuff")
+        pose = self._desiredPose
+        timestamp = self._desiredTimeStamp
+        self.__actionQueue.append(Action(pose, timestamp))
+
+        return len(self.__actionQueue)
+
     def handleEgo(self):
         # send data to ROS
         MondeoPlayerAgentHandler().process(self.__carlaActor)
@@ -176,6 +198,7 @@ class CarlaActor(Actor):
         distanceM = speedMS * diffS
 
         # TODO event handling / route calculation goes here
+        print("TODO get event from deque and execute")
 
         # send data to Carla
         transform = carla.Transform(carla.Location(self._desiredPose.getPosition()[0] - distanceM,
