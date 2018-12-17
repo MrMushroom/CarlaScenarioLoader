@@ -1,3 +1,6 @@
+source ~/catkin_ws/devel/setup.sh
+source ~/temp-ros-geometry/devel/setup.sh
+
 python3 scenario_loader.py Carla 172.20.1.89 OpenScenario scenarios/LaneChanger_lite.xosc
 
 # # get tf for python3
