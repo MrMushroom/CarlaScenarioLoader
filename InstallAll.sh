@@ -96,6 +96,7 @@ if [ ! -d ~/temp-ros-geometry ]; then
   source venv/bin/activate
   pip install catkin_pkg pyyaml empy rospkg numpy
   catkin_make
+  deactivate
   echo -e "${LIGHT_GREEN}[INFO] Install ros-geometry - Done${NC}"
 else
   echo -e "${RED}[Error] ~/temp-ros-geometry/ does already exist. Delete for reinstall${NC}"
