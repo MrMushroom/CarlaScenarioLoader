@@ -54,8 +54,9 @@ class StartCondition:
 
         # Management
         self.isConditionTriggered = False
-        self.timestampConditionTriggered = None
-        self.isConditionMet = False
+        self.isConditionMetEdge = False
+        self.timestampConditionMetEdge = None
+        self.isConditionTrue = False
 
         # timing
         self.delay = None

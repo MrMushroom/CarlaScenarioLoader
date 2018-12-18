@@ -34,9 +34,11 @@ class Actor(IObserver, threading.Thread):
         self._isLogging = enableLogging
         self._isConnected = False
         self._isRunning = False
+        self._actionQueue = None
         self._currentPose = None
         self._currentSpeed = None
         self._currentTimeStamp = None
+        self._executionQueue = None
         self._desiredPose = pose
         self._desiredSpeed = speed
         self._desiredTimeStamp = timestamp
@@ -64,6 +66,17 @@ class Actor(IObserver, threading.Thread):
         self._desiredSpeed = speed
         self._desiredPose = pose
         self._desiredTimeStamp = TimeStamp()
+
+    def addAction(self, action):
+        self._dataExchangeLock.acquire()
+        self._actionQueue.append(action)
+        self._dataExchangeLock.release()
+
+    def setAction(self, action):
+        self._dataExchangeLock.acquire()
+        self._actionQueue = deque([action])
+        self._executionQueue = None
+        self._dataExchangeLock.release()
 
     def startActing(self):
         if self._isConnected == False:
@@ -109,7 +122,6 @@ class CarlaActor(Actor):
         Actor.__init__(self, actorType, name, events, enableLogging, pose, speed, timestamp)
         self.__carlaActor = None
         self.__inputController = None
-        self.__actionQueue = None
 
     def connectToSimulatorAndEvenHandler(self, ipAddress, port, timeout):
         try:
@@ -178,47 +190,62 @@ class CarlaActor(Actor):
         for event in self._events:
             sc = event.getStartCondition()
             if sc != None:
-                if sc.isConditionMet:
+                if sc.isConditionTrue:
                     pass
+                elif sc.isConditionMetEdge:
+                    if TimedEventHandler.getCurrentSimTimeStamp().getFloat() >= sc.timestampConditionTriggered.getFloat() + sc.delay:
+                        sc.isConditionTrue = True
+                    else:
+                        sc.isConditionTrue = False
                 elif sc.isConditionTriggered:
-                    if sc.delay != None:
-                        if sc.timestampConditionTriggered.getFloat() + sc.delay >= TimedEventHandler.getCurrentSimTimeStamp().getFloat():
-                            event.isConditionMet = True
-                    elif sc.edge == "falling":
-                        if not self.checkConditionTriggered(sc):
-                            event.isConditionMet = True
+                    if sc.edge == "falling" or sc.edge == "any":
+                        sc.isConditionMetEdge = not self.checkConditionTriggered(sc)
                     else:
                         print("[WARNING][CarlaActor::handleEvents] Implementation Missing. This should not be reached")
                 else:
                     sc.isConditionTriggered = self.isConditionTriggered(sc)
-                    if sc.delay != None:
-                        if sc.delay > 0.0:
+                    if sc.isConditionTriggered and (sc.edge == "rising" or sc.edge == "any"):
+                        sc.isConditionMetEdge = True
+                        if sc.delay == 0.0:
+                            sc.isConditionTrue = True
+                        else:
                             sc.timestampConditionTriggered = TimedEventHandler.getCurrentSimTimeStamp()
-                        
-                    if sc.edge != None:
-                        if sc.edge == "rising":
-                            sc.isConditionMet = True
                     else:
-                        print("[WARNING][CarlaActor::handleEvents] Implementation Missing. This should not be reached")
-        # TODO execute all events without sc
+                        pass # edge falling
+        
+        remainingEvents = deque()
+        while(len(self._events) > 0):
+            event = self._events.popleft()
+            if event.getStartCondition().isConditionTrue:
+                if event.getStartCondition == "overwrite":
+                    if hasattr(event, "getActors"):
+                        for actor in event.getActors():
+                            actor.setAction(event.getAction())
+                    else:
+                        self.setAction(event.getAction)
+                else:
+                    print("[WARNING][CarlaActor::handleEvents] Implementation Missing. This should not be reached")
+            else:
+                remainingEvents.append(event)
+        self._events = remainingEvents
 
-    def handleActionQueue(self):
+
+    def handleExecutionQueue(self):
         # check if queue full
-        if self.__actionQueue is not None:
-            if len(self.__actionQueue) > 0:
-                return len(self.__actionQueue)
+        if self._executionQueue is not None:
+            if len(self._executionQueue) > 0:
+                return len(self._executionQueue)
 
         # queue empty or not initialized
-        self.__actionQueue = deque([])
+        self._executionQueue = deque([])
 
-        # TODO implement magic action queue stuff
-        # check startconditions for events
+        # TODO implement magic execution queue stuff
         print("# TODO implement magic action queue stuff")
         pose = self._desiredPose
         timestamp = self._desiredTimeStamp
-        self.__actionQueue.append(Action(pose, timestamp))
+        self._executionQueue.append(Action(pose, timestamp))
 
-        return len(self.__actionQueue)
+        return len(self._executionQueue)
 
     def handleEgo(self):
         # send data to ROS
