@@ -19,6 +19,9 @@ class Event:
     def getStartCondition(self):
         return self.__startCondition
 
+    def clearStartCondition(self):
+        self.__startCondition = None
+
 
 class SimTimeEvent(Event):
     def __init__(self, action, startCondition):
@@ -48,6 +51,11 @@ class EntityEvent(Event):
 class StartCondition:
     def __init__(self):
         self.priority = None
+
+        # Management
+        self.isConditionTriggered = False
+        self.timestampConditionTriggered = None
+        self.isConditionMet = False
 
         # timing
         self.delay = None

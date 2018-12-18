@@ -152,7 +152,55 @@ class CarlaActor(Actor):
             return False
 
     def addEntityEvent(self, event):
+        self._dataExchangeLock.acquire()
         self._events.append(event)
+        self._dataExchangeLock.release()
+    
+    def checkConditionTriggered(self, sc):
+        isConditionTriggered = False
+
+        if sc.pose != None:
+            distance = math.sqrt(pow(self._currentPose.getPosition()[0]-sc.pose.getPosition()[0], 2.0) + 
+                                 pow(self._currentPose.getPosition()[1]-sc.pose.getPosition()[1], 2.0) + 
+                                 pow(self._currentPose.getPosition()[2]-sc.pose.getPosition()[2], 2.0))
+            if distance < sc.tolerance:
+                isConditionTriggered = True
+            else:
+                isConditionTriggered = False
+        else:
+            print("[WARNING][CarlaActor::handleEvents] Implementation Missing. This should not be reached")
+
+        return isConditionTriggered
+
+
+    def handleEvents(self):
+        # check the startconditions
+        for event in self._events:
+            sc = event.getStartCondition()
+            if sc != None:
+                if sc.isConditionMet:
+                    pass
+                elif sc.isConditionTriggered:
+                    if sc.delay != None:
+                        if sc.timestampConditionTriggered.getFloat() + sc.delay >= TimedEventHandler.getCurrentSimTimeStamp().getFloat():
+                            event.isConditionMet = True
+                    elif sc.edge == "falling":
+                        if not self.checkConditionTriggered(sc):
+                            event.isConditionMet = True
+                    else:
+                        print("[WARNING][CarlaActor::handleEvents] Implementation Missing. This should not be reached")
+                else:
+                    sc.isConditionTriggered = self.isConditionTriggered(sc)
+                    if sc.delay != None:
+                        if sc.delay > 0.0:
+                            sc.timestampConditionTriggered = TimedEventHandler.getCurrentSimTimeStamp()
+                        
+                    if sc.edge != None:
+                        if sc.edge == "rising":
+                            sc.isConditionMet = True
+                    else:
+                        print("[WARNING][CarlaActor::handleEvents] Implementation Missing. This should not be reached")
+        # TODO execute all events without sc
 
     def handleActionQueue(self):
         # check if queue full
@@ -198,7 +246,7 @@ class CarlaActor(Actor):
         distanceM = speedMS * diffS
 
         # TODO event handling / route calculation goes here
-        print("TODO get event from deque and execute")
+        #print("TODO get event from deque and execute")
 
         # send data to Carla
         transform = carla.Transform(carla.Location(self._desiredPose.getPosition()[0] - distanceM,
@@ -214,7 +262,9 @@ class CarlaActor(Actor):
         if event is None:
             pass  # just a normal tick
         else:
-            raise NotImplementedError("implement update")
+            self._dataExchangeLock.acquire()
+            self._events.append(event)
+            self._dataExchangeLock.release()
 
         self._wakeUp.set()
 

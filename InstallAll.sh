@@ -74,6 +74,8 @@ then
   cd ~/carla
   export UE4_ROOT=~/UnrealEngine_4.19
   make PythonAPI
+  cd ~/carla/PythonAPI
+  sudo python3 setup.py install
   echo -e "${LIGHT_YELLOW}[INFO] Install Carla Python API - Fixing ROS apt-get dependencies ...${NC}"
   sudo apt-get install libpng12-0 libpng12-dev
   sudo apt-get install ros-kinetic-pcl-ros
@@ -93,11 +95,14 @@ if [ ! -d ~/temp-ros-geometry ]; then
   git clone https://github.com/ros/geometry
   git clone https://github.com/ros/geometry2
   cd ..
+  sudo apt-get install virtualenv
+  sudo apt-get install ros-kinetic-tf2-bullet
   virtualenv -p /usr/bin/python3 venv
   source venv/bin/activate
-  pip install catkin_pkg pyyaml empy rospkg numpy
+  pip3 install catkin_pkg pyyaml empy rospkg numpy
   catkin_make
   deactivate
+  pip3 install catkin_pkg pyyaml empy rospkg numpy xmlschema
   echo -e "${LIGHT_GREEN}[INFO] Install ros-geometry - Done${NC}"
 else
   echo -e "${RED}[Error] ~/temp-ros-geometry/ does already exist. Delete for reinstall${NC}"
