@@ -38,6 +38,7 @@ class Actor(IObserver, threading.Thread):
         self._currentPose = None
         self._currentSpeed = None
         self._currentTimeStamp = None
+        self._previousTimeStamp = None
         self._executionQueue = deque()
         self._desiredPose = pose
         self._desiredSpeed = speed
@@ -253,7 +254,7 @@ class CarlaActor(Actor):
         if len(self._actionQueue) == 0:
             # fallback (idle-speed)
             if self._desiredSpeed >= 0:
-                s = 0.01 # 10cm
+                s = 0.01 # 10mm
                 v = self._desiredSpeed * 1000.0 / 3600
                 dt = s / v
 
@@ -262,10 +263,13 @@ class CarlaActor(Actor):
                 dx = s*math.cos(yaw)*math.cos(pitch)
                 dy = s*math.sin(yaw)*math.cos(pitch)
                 dz = s*math.sin(pitch)
-                sec, usec = self._currentTimeStamp.getInt()
+
+                if(self._previousTimeStamp is None):
+                    self._previousTimeStamp = self._currentTimeStamp # may happen at startup
+                sec, usec = self._previousTimeStamp.getInt()
 
                 pointCount = 1 # pointCount <= 100 guarantees 0.5m z difference for streets with 11.5% elevation, as long as the car is parallel to the street
-                while(pointCount<=100):
+                while(pointCount<=1000):
                     pose = Pose(x=self._currentPose.getPosition()[0] + dx*pointCount,
                                 y=self._currentPose.getPosition()[1] + dy*pointCount,
                                 z=self._currentPose.getPosition()[2] + dz*pointCount,
@@ -284,7 +288,6 @@ class CarlaActor(Actor):
             # TODO build a better decision tree for the action
             if(action.longitudinal_speed != None and action.longitudinal_dynamics_shape != None and action.longitudinal_dynamics_rate != None):
                 # straight ahead
-                print(action.longitudinal_dynamics_shape)
                 if(action.longitudinal_dynamics_shape == "step"):
                     self._desiredSpeed = action.longitudinal_speed
                 else:
@@ -327,6 +330,9 @@ class CarlaActor(Actor):
             self._desiredPose = action.pose
         else:
             self._desiredPose = self._currentPose
+        
+        # if self._name == "Target1":
+        #     print(self._name, len(self._events), len(self._actionQueue), "\t", len(self._executionQueue), "\t", math.fabs(self._currentPose.getPosition()[0] - self._desiredPose.getPosition()[0]), "\t", self._desiredPose)
 
         # send data to Carla
         transform = carla.Transform(carla.Location(self._desiredPose.getPosition()[0],
@@ -368,6 +374,7 @@ class CarlaActor(Actor):
                 velocity = self.__carlaActor.get_velocity()
                 self._currentSpeed = math.sqrt(pow(velocity.x, 2.0) + pow(velocity.y, 2.0) + pow(velocity.z, 2.0))
                 self._currentTimeStamp = TimedEventHandler().getCurrentSimTimeStamp()
+                self._previousTimeStamp = TimedEventHandler().getPreviousSimTimeStamp()
                 # print(self._name, self._currentTimeStamp.getFloat(), self._currentPose, self._currentSpeed)
 
                 self.handleEvents()

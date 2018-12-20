@@ -36,6 +36,13 @@ class TimedEventHandler(metaclass=Singleton):
         timestamp = TimeStamp(int(simtime), (simtime - int(simtime))*1000000)
         return timestamp
 
+    def getPreviousSimTimeStamp(self):
+        self.__syncLock.acquire()
+        simtime = self.__previousSimTime
+        self.__syncLock.release()
+        timestamp = TimeStamp(int(simtime), (simtime - int(simtime))*1000000)
+        return timestamp
+
     def getSimTimeDiff(self):
         self.__syncLock.acquire()
         if self.__previousSimTime is None:
