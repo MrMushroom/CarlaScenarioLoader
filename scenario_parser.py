@@ -297,9 +297,12 @@ class OpenScenarioParser(ScenarioParser):
         try:
             if("Private" in action):
                 if("Longitudinal" in action["Private"]):
-                    parsedAction.speed = action["Private"]["Longitudinal"]["Speed"]["Target"]["Absolute"]["@value"]
-                    parsedAction.dynamics_shape = action["Private"]["Longitudinal"]["Speed"]["Dynamics"]["@shape"]
-                    parsedAction.dynamics_rate = action["Private"]["Longitudinal"]["Speed"]["Dynamics"]["@rate"]
+                    parsedAction.longitudinal_speed = action["Private"][
+                        "Longitudinal"]["Speed"]["Target"]["Absolute"]["@value"]
+                    parsedAction.longitudinal_dynamics_shape = action[
+                        "Private"]["Longitudinal"]["Speed"]["Dynamics"]["@shape"]
+                    parsedAction.longitudinal_dynamics_rate = action[
+                        "Private"]["Longitudinal"]["Speed"]["Dynamics"]["@rate"]
                 else:
                     print(
                         "[Error][ScenarioParser::_parseAction] Unsupported Private action:", action["Private"].keys())

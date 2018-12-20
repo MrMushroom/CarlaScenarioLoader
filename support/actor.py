@@ -280,7 +280,17 @@ class CarlaActor(Actor):
             else:
                 pass # no action, no speed -> just stay
         else:
-            print("[WARNING][CarlaActor::handleExecutionQueue] Implementation Missing. This should not be reached")
+            action = self._actionQueue.popleft()
+            # TODO build a better decision tree for the action
+            if(action.longitudinal_speed != None and action.longitudinal_dynamics_shape != None and action.longitudinal_dynamics_rate != None):
+                # straight ahead
+                print(action.longitudinal_dynamics_shape)
+                if(action.longitudinal_dynamics_shape == "step"):
+                    self._desiredSpeed = action.longitudinal_speed
+                else:
+                    print("[WARNING][CarlaActor::handleExecutionQueue] Implementation Missing for longitudinal action!")
+            else:
+                print("[WARNING][CarlaActor::handleExecutionQueue] Implementation Missing. Unable to handle new action type")
         return len(self._executionQueue)
 
     def handleEgo(self):

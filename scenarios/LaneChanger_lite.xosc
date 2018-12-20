@@ -152,7 +152,7 @@
                             <Private>
                                 <Longitudinal>
                                     <Speed>
-                                        <Dynamics shape="linear" rate="1.0"/>
+                                        <Dynamics shape="step" rate="0.0"/>
                                         <Target>
                                             <Absolute value="20.0"/>
                                         </Target>
