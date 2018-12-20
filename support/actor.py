@@ -23,14 +23,14 @@ from timed_event_handler import TimedEventHandler
 
 
 class Actor(IObserver, threading.Thread):
-    def __init__(self, actorType, name, events, enableLogging, pose, speed, timestamp):
+    def __init__(self, actorType, name, enableLogging, pose, speed, timestamp):
         threading.Thread.__init__(self)
 
         self.name = name
 
         self._actorType = actorType
         self._name = name
-        self._events = events
+        self._events = deque()
         self._isLogging = enableLogging
         self._isConnected = False
         self._isRunning = False
@@ -74,9 +74,13 @@ class Actor(IObserver, threading.Thread):
 
     def setAction(self, action):
         self._dataExchangeLock.acquire()
+        self._setAction(action)
+        self._dataExchangeLock.release()
+    
+    def _setAction(self, action):
         self._actionQueue = deque([action])
         self._executionQueue.clear()
-        self._dataExchangeLock.release()
+
 
     def startActing(self):
         if self._isConnected == False:
@@ -118,8 +122,8 @@ class Actor(IObserver, threading.Thread):
 
 
 class CarlaActor(Actor):
-    def __init__(self, actorType, name, events=deque(), enableLogging=False, pose=None, speed=None, timestamp=None):
-        Actor.__init__(self, actorType, name, events, enableLogging, pose, speed, timestamp)
+    def __init__(self, actorType, name, enableLogging=False, pose=None, speed=None, timestamp=None):
+        Actor.__init__(self, actorType, name, enableLogging, pose, speed, timestamp)
         self.__carlaActor = None
         self.__inputController = None
 
@@ -183,12 +187,12 @@ class CarlaActor(Actor):
             distance = math.sqrt(pow(self._currentPose.getPosition()[0]-sc.pose.getPosition()[0], 2.0) + 
                                  pow(self._currentPose.getPosition()[1]-sc.pose.getPosition()[1], 2.0) + 
                                  pow(self._currentPose.getPosition()[2]-sc.pose.getPosition()[2], 2.0))
-            if distance < sc.tolerance:
+            if distance < sc.pose_tolerance:
                 isConditionTriggered = True
             else:
                 isConditionTriggered = False
         else:
-            print("[WARNING][CarlaActor::handleEvents] Implementation Missing. This should not be reached")
+            print("[WARNING][CarlaActor::checkConditionTriggered] Implementation Missing. This should not be reached")
 
         return isConditionTriggered
 
@@ -211,7 +215,7 @@ class CarlaActor(Actor):
                     else:
                         print("[WARNING][CarlaActor::handleEvents] Implementation Missing. This should not be reached")
                 else:
-                    sc.isConditionTriggered = self.isConditionTriggered(sc)
+                    sc.isConditionTriggered = self.checkConditionTriggered(sc)
                     if sc.isConditionTriggered and (sc.edge == "rising" or sc.edge == "any"):
                         sc.isConditionMetEdge = True
                         if sc.delay == 0.0:
@@ -220,23 +224,25 @@ class CarlaActor(Actor):
                             sc.timestampConditionTriggered = TimedEventHandler.getCurrentSimTimeStamp()
                     else:
                         pass # edge falling
-        
+       
         remainingEvents = deque()
         while(len(self._events) > 0):
             event = self._events.popleft()
             if event.getStartCondition().isConditionTrue:
-                if event.getStartCondition == "overwrite":
+                if event.getStartCondition().priority == "overwrite":
                     if hasattr(event, "getActors"):
                         for actor in event.getActors():
-                            actor.setAction(event.getAction())
+                            if(actor is self):
+                                self._setAction(event.getAction())
+                            else:
+                                actor.setAction(event.getAction())
                     else:
-                        self.setAction(event.getAction)
+                        self._setAction(event.getAction())
                 else:
                     print("[WARNING][CarlaActor::handleEvents] Implementation Missing. This should not be reached")
             else:
                 remainingEvents.append(event)
         self._events = remainingEvents
-
 
     def handleExecutionQueue(self):
         # check if queue full
@@ -311,7 +317,6 @@ class CarlaActor(Actor):
             self._desiredPose = action.pose
         else:
             self._desiredPose = self._currentPose
-        print(self._name, len(self._events), len(self._actionQueue), len(self._executionQueue), self._desiredPose)
 
         # send data to Carla
         transform = carla.Transform(carla.Location(self._desiredPose.getPosition()[0],
@@ -354,6 +359,8 @@ class CarlaActor(Actor):
                 self._currentSpeed = math.sqrt(pow(velocity.x, 2.0) + pow(velocity.y, 2.0) + pow(velocity.z, 2.0))
                 self._currentTimeStamp = TimedEventHandler().getCurrentSimTimeStamp()
                 # print(self._name, self._currentTimeStamp.getFloat(), self._currentPose, self._currentSpeed)
+
+                self.handleEvents()
 
                 # handle data, send to carla - trigger magic stuff
                 if(self._name == "Ego"):

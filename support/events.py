@@ -19,13 +19,10 @@ class Event:
     def getStartCondition(self):
         return self.__startCondition
 
-    def clearStartCondition(self):
-        self.__startCondition = None
-
 
 class SimTimeEvent(Event):
     def __init__(self, action, startCondition):
-        Event.__init__(self, action)
+        Event.__init__(self, action, startCondition)
 
         self.__time = action.timestamp
 
@@ -35,12 +32,12 @@ class SimTimeEvent(Event):
 
 class StateEvent(Event):
     def __init__(self, action, startCondition):
-        Event.__init__(self, action)
+        Event.__init__(self, action, startCondition)
 
 
 class EntityEvent(Event):
     def __init__(self, action, actors, startCondition):
-        Event.__init__(self, action)
+        Event.__init__(self, action, startCondition)
 
         self.__actors = actors
 

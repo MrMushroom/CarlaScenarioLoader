@@ -47,24 +47,6 @@
             <CatalogReference catalogName="DriverCatalog" entryName="HastyDriver"/>
         </Controller>
     </Object>
-    <Object name="Target1">
-        <CatalogReference catalogName="VechicleCatalog" entryName="AudiA4_red_147kW"/>
-        <Controller>
-            <CatalogReference catalogName="DriverCatalog" entryName="DefaultDriver"/>
-        </Controller>
-    </Object>
-    <Object name="Target2">
-        <CatalogReference catalogName="VechicleCatalog" entryName="AudiA3_white_147kW"/>
-        <Controller>
-            <CatalogReference catalogName="DriverCatalog" entryName="DefaultDriver"/>
-        </Controller>
-    </Object>
-    <Object name="Target3">
-        <CatalogReference catalogName="VechicleCatalog" entryName="AudiA4_red_147kW"/>
-        <Controller>
-            <CatalogReference catalogName="DriverCatalog" entryName="DefaultDriver"/>
-        </Controller>
-    </Object>
 </Entities>
 
 <Storyboard>
@@ -83,7 +65,7 @@
                 </Action>
                 <Action>
                     <Position>
-                        <World x="271.5" y="133.5" z="38.5" h="3.1415926" p="0" r="0"/>
+                        <World x="271.5" y="129.5" z="38.5" h="3.1415926" p="0" r="0"/>
                     </Position>
                 </Action>
             </Private>
@@ -144,7 +126,7 @@
         <Act name="MyAct">
             <Sequence name="Sequence1" numberOfExecutions="1">
                 <Actors>
-                    <Entity name="Target1"/>
+                    <Entity name="A1"/>
                 </Actors>
                 <Maneuver name="Maneuver1">
                     <Event name="Event1" priority="overwrite">
@@ -165,12 +147,12 @@
                                 <Condition name="StartCondition1" delay="0" edge="rising">
                                     <ByEntity>
                                         <TriggeringEntities rule="any">
-                                            <Entity name="Target1"/>
+                                            <Entity name="A1"/>
                                         </TriggeringEntities>
                                         <EntityCondition>
-                                            <ReachPosition tolerance="1.0">
+                                            <ReachPosition tolerance="10.0">
 												<Position>
-													<World x="270.5" y="129.5" z="38.5" h="3.1415926" p="0" r="0"/>
+													<World x="300.5" y="129.5" z="38.5" h="3.1415926" p="0" r="0"/>
 												</Position>
 											</ReachPosition>
                                         </EntityCondition>
@@ -184,7 +166,7 @@
             <Conditions>
                 <Start>
                     <ConditionGroup>
-                        <Condition name="StartCondition0" delay="0" edge="rising">
+                        <Condition name="" delay="0" edge="rising">
                             <ByValue>
                                 <SimulationTime value="0" rule="equal_to"/>
                             </ByValue>
