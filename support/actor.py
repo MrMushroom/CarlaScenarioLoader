@@ -34,11 +34,11 @@ class Actor(IObserver, threading.Thread):
         self._isLogging = enableLogging
         self._isConnected = False
         self._isRunning = False
-        self._actionQueue = None
+        self._actionQueue = deque()
         self._currentPose = None
         self._currentSpeed = None
         self._currentTimeStamp = None
-        self._executionQueue = None
+        self._executionQueue = deque()
         self._desiredPose = pose
         self._desiredSpeed = speed
         self._desiredTimeStamp = timestamp
@@ -75,7 +75,7 @@ class Actor(IObserver, threading.Thread):
     def setAction(self, action):
         self._dataExchangeLock.acquire()
         self._actionQueue = deque([action])
-        self._executionQueue = None
+        self._executionQueue.clear()
         self._dataExchangeLock.release()
 
     def startActing(self):
@@ -127,7 +127,7 @@ class CarlaActor(Actor):
         try:
             self._client = carla.Client(ipAddress, port)
             self._client.set_timeout(timeout)
-            print("# try spawning actor", self._name)
+            print("# spawning actor", self._name)
             blueprint = self._client.get_world().get_blueprint_library().find("vehicle.lincoln.mkz2017")
             # blueprint = self._client.get_world().get_blueprint_library().find("vehicle.ford.mustang")
             transform = carla.Transform(
@@ -139,8 +139,16 @@ class CarlaActor(Actor):
                                yaw=math.degrees(self._desiredPose.getOrientation()[2])))
             self.__carlaActor = self._client.get_world().spawn_actor(blueprint, transform)
             if self.__carlaActor is None:
-                print("TODO-FIX DEBUG: Couldn't spawn actor")
-                # raise RuntimeError("Couldn't spawn actor")
+                raise RuntimeError("Couldn't spawn actor")
+
+            # wait for vehicle spawn
+            if(transform.location.x != 0 or transform.location.y != 0 or transform.location.z != 0 or
+                transform.rotation.roll != 0 or transform.rotation.pitch != 0 or transform.rotation.yaw != 0):
+                # desired location is not origin -> wait for vehicle spawn
+                transform = self.__carlaActor.get_transform()
+                while(transform.location.x == 0 and transform.location.y == 0 and transform.location.z == 0 and
+                    transform.rotation.roll == 0 and transform.rotation.pitch == 0 and transform.rotation.yaw == 0):
+                    transform = self.__carlaActor.get_transform()
 
             TimedEventHandler().subscribe(self._name, self.update)
             self._isConnected = True
@@ -232,19 +240,41 @@ class CarlaActor(Actor):
 
     def handleExecutionQueue(self):
         # check if queue full
-        if self._executionQueue is not None:
-            if len(self._executionQueue) > 0:
-                return len(self._executionQueue)
+        if len(self._executionQueue) > 1:
+            return len(self._executionQueue)
 
-        # queue empty or not initialized
-        self._executionQueue = deque([])
+        # queue hast just one item left, start magic execution stuff
+        if len(self._actionQueue) == 0:
+            # fallback (idle-speed)
+            if self._desiredSpeed >= 0:
+                s = 0.01 # 10cm
+                v = self._desiredSpeed * 1000.0 / 3600
+                dt = s / v
 
-        # TODO implement magic execution queue stuff
-        print("# TODO implement magic action queue stuff")
-        pose = self._desiredPose
-        timestamp = self._desiredTimeStamp
-        self._executionQueue.append(Action(pose, timestamp))
+                yaw = self._currentPose.getOrientation()[2]
+                pitch = self._currentPose.getOrientation()[1]
+                dx = s*math.cos(yaw)*math.cos(pitch)
+                dy = s*math.sin(yaw)*math.cos(pitch)
+                dz = s*math.sin(pitch)
+                sec, usec = self._currentTimeStamp.getInt()
 
+                pointCount = 1 # pointCount <= 100 guarantees 0.5m z difference for streets with 11.5% elevation, as long as the car is parallel to the street
+                while(pointCount<=100):
+                    pose = Pose(x=self._currentPose.getPosition()[0] + dx*pointCount,
+                                y=self._currentPose.getPosition()[1] + dy*pointCount,
+                                z=self._currentPose.getPosition()[2] + dz*pointCount,
+                                roll=self._currentPose.getOrientation()[0],
+                                pitch=self._currentPose.getOrientation()[1],
+                                yaw=self._currentPose.getOrientation()[2])
+                    timestamp = TimeStamp(sec, usec)
+                    timestamp.addFloat(dt*pointCount)
+
+                    self._executionQueue.append(Action(pose, timestamp))
+                    pointCount+=1
+            else:
+                pass # no action, no speed -> just stay
+        else:
+            print("[WARNING][CarlaActor::handleExecutionQueue] Implementation Missing. This should not be reached")
         return len(self._executionQueue)
 
     def handleEgo(self):
@@ -267,21 +297,29 @@ class CarlaActor(Actor):
 
     def handleNonEgo(self):
         # do magic pose stuff
-        self._desiredPose = self._currentPose
-        speedMS = self._desiredSpeed * 1000.0 / 3600
-        diffS = TimedEventHandler().getSimTimeDiff()
-        distanceM = speedMS * diffS
+        self.handleExecutionQueue()
 
-        # TODO event handling / route calculation goes here
-        #print("TODO get event from deque and execute")
+        # TODO check: due to execution stack, there might be an inconsitency (missing pose for timestamp) when stack gets empty
+        action = None
+        while len(self._executionQueue) > 0:
+            if(self._executionQueue[0].timestamp <= self._currentTimeStamp):
+                action  = self._executionQueue.popleft()
+            else:
+                break
+        
+        if action != None:
+            self._desiredPose = action.pose
+        else:
+            self._desiredPose = self._currentPose
+        print(self._name, len(self._events), len(self._actionQueue), len(self._executionQueue), self._desiredPose)
 
         # send data to Carla
-        transform = carla.Transform(carla.Location(self._desiredPose.getPosition()[0] - distanceM,
-                                                   self._desiredPose.getPosition()[1],
-                                                   self._desiredPose.getPosition()[2]),
+        transform = carla.Transform(carla.Location(self._desiredPose.getPosition()[0],
+                                                self._desiredPose.getPosition()[1],
+                                                self._desiredPose.getPosition()[2]),
                                     carla.Rotation(math.degrees(self._desiredPose.getOrientation()[1]),
-                                                   math.degrees(self._desiredPose.getOrientation()[2]),
-                                                   math.degrees(self._desiredPose.getOrientation()[0])))
+                                                math.degrees(self._desiredPose.getOrientation()[2]),
+                                                math.degrees(self._desiredPose.getOrientation()[0])))
 
         self.__carlaActor.set_transform(transform)
 

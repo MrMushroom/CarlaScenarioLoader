@@ -29,6 +29,26 @@ class TimeStamp:
         self.__sec = sec
         self.__usec = usec
 
+    def __lt__(self, other):
+        if isinstance(other, TimeStamp):
+            return (self.__sec < other.__sec) or (self.__sec == other.__sec and self.__usec < other.__usec)
+        return False
+
+    def __le__(self, other):
+        if isinstance(other, TimeStamp):
+            return (self.__sec < other.__sec) or (self.__sec == other.__sec and self.__usec <= other.__usec)
+        return False
+
+    def __gt__(self, other):
+        if isinstance(other, TimeStamp):
+            return (self.__sec > other.__sec) or (self.__sec == other.__sec and self.__usec > other.__usec)
+        return False
+
+    def __ge__(self, other):
+        if isinstance(other, TimeStamp):
+            return (self.__sec > other.__sec) or (self.__sec == other.__sec and self.__usec >= other.__usec)
+        return False
+
     def __eq__(self, other):
         if isinstance(other, TimeStamp):
             return self.__sec == other.__sec and self.__usec == other.__usec
@@ -36,6 +56,10 @@ class TimeStamp:
 
     def __ne__(self, other):
         return not self.__eq__(other)
+
+    def addFloat(self, time):
+        self.__sec += int(time)
+        self.__usec += (time - int(time))*1000000
 
     def getInt(self):
         return (self.__sec, self.__usec)
