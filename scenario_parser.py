@@ -83,8 +83,7 @@ class OpenScenarioParser(ScenarioParser):
 
     def __loadSchema(self):
         try:
-            self.__oscSchema = xmlschema.XMLSchema(
-                self._scenarioFormatFilePath)
+            self.__oscSchema = xmlschema.XMLSchema(self._scenarioFormatFilePath)
             return True
         except:
             return False
@@ -97,51 +96,42 @@ class OpenScenarioParser(ScenarioParser):
 
     def __loadScenarioDictionary(self, scenarioDescriptionFilePath):
         try:
-            self._scenarioDictionary = self.__oscSchema.to_dict(
-                scenarioDescriptionFilePath)
+            self._scenarioDictionary = self.__oscSchema.to_dict(scenarioDescriptionFilePath)
             return True
         except:
             return False
 
     def parseScenario(self, scenarioDescriptionFilePath):
         if not self.__loadSchema():
-            print(
-                "[INFO][ScenarioParser::parseScenario] Unexpected error during XSD loading")
+            print("[INFO][ScenarioParser::parseScenario] Unexpected error during XSD loading")
             return False
 
         if not self.__validateOSC(scenarioDescriptionFilePath):
-            print(
-                "[INFO][ScenarioParser::parseScenario] Unexpected error during XML validation")
+            print("[INFO][ScenarioParser::parseScenario] Unexpected error during XML validation")
             return False
 
         if not self.__loadScenarioDictionary(scenarioDescriptionFilePath):
-            print(
-                "[INFO][ScenarioParser::parseScenario] Unexpected error during dictionary loading")
+            print("[INFO][ScenarioParser::parseScenario] Unexpected error during dictionary loading")
             return False
 
         if not self._processCatalogs():
-            print(
-                "[INFO][ScenarioParser::parseScenario] Unexpected error during catalog processing")
+            print("[INFO][ScenarioParser::parseScenario] Unexpected error during catalog processing")
             return False
 
         if not self._processActors():
-            print(
-                "[INFO][ScenarioParser::parseScenario] Unexpected error during actor processing")
+            print("[INFO][ScenarioParser::parseScenario] Unexpected error during actor processing")
             return False
 
         if not self._processEntityEvents():
-            print(
-                "[INFO][ScenarioParser::parseScenario] Unexpected error during EntityEvent processing")
+            print("[INFO][ScenarioParser::parseScenario] Unexpected error during EntityEvent processing")
             return False
 
         if not self._processSimTimeEvents():
-            print(
-                "[INFO][ScenarioParser::parseScenario] Unexpected error during SimTimeEvent processing")
+            print("[INFO][ScenarioParser::parseScenario] Unexpected error during SimTimeEvent processing")
             return False
 
         if not self._processStateEvents():
-            print(
-                "[INFO][ScenarioParser::parseScenario] Unexpected error during StateEvents processing")
+            print("[INFO][ScenarioParser::parseScenario] Unexpected error during StateEvents processing")
             return False
 
         return True
@@ -161,35 +151,28 @@ class OpenScenarioParser(ScenarioParser):
             for entity in self._scenarioDictionary["Entities"]["Object"]:
                 # choice CatalogReference, Vehicle, Pedestrian, MiscObject
                 if "CatalogReference" in entity:
-                    print(
-                        "[WARNING][ScenarioParser::_processActors] CatalogReference not parsed. Guessing Vehicle:", entity["@name"])
+                    print("[WARNING][ScenarioParser::_processActors] CatalogReference not parsed. Guessing Vehicle:", entity["@name"])
                     self._actors.append(CarlaActor("Vehicle", entity["@name"]))
                 elif "Vehicle" in entity:
                     self._actors.append(CarlaActor("Vehicle", entity["@name"]))
                 elif "Pedestrian" in entity:
-                    print(
-                        "[INFO][ScenarioParser::_processActors] Pedestrian not supported yet")
+                    print("[INFO][ScenarioParser::_processActors] Pedestrian not supported yet")
                 elif "MiscObject" in entity:
-                    print(
-                        "[INFO][ScenarioParser::_processActors] MiscObject not supported yet")
+                    print("[INFO][ScenarioParser::_processActors] MiscObject not supported yet")
 
                 # Controller
                 if "Controller" in entity:
-                    print(
-                        "[INFO][ScenarioParser::_processActors] Controller not supported yet")
+                    print("[INFO][ScenarioParser::_processActors] Controller not supported yet")
 
         except:
-            print(
-                "[Error][ScenarioParser::_processActors] Unexpected error:", sys.exc_info())
+            print("[Error][ScenarioParser::_processActors] Unexpected error:", sys.exc_info())
             return False
 
         # parse Storyboard-Init
         if "Global" in self._scenarioDictionary["Storyboard"]["Init"]["Actions"]:
-            print(
-                "[INFO][ScenarioParser::_processActors] Init:Action:Global not supported yet")
+            print("[INFO][ScenarioParser::_processActors] Init:Action:Global not supported yet")
         if "UserDefined" in self._scenarioDictionary["Storyboard"]["Init"]["Actions"]:
-            print(
-                "[INFO][ScenarioParser::_processActors] Init:Action:UserDefined not supported yet")
+            print("[INFO][ScenarioParser::_processActors] Init:Action:UserDefined not supported yet")
         if "Private" in self._scenarioDictionary["Storyboard"]["Init"]["Actions"]:
             for action in self._scenarioDictionary["Storyboard"]["Init"]["Actions"]["Private"]:
                 for actor in self._actors:
@@ -203,25 +186,20 @@ class OpenScenarioParser(ScenarioParser):
     def _processEntityEvents(self):
         try:
             if(len(self._scenarioDictionary["Storyboard"]["Story"]) != 1):
-                print(
-                    "[INFO][ScenarioParser::_processEntityEvents] Use Exactly one Story")
+                print("[INFO][ScenarioParser::_processEntityEvents] Use Exactly one Story")
                 return False
             if(len(self._scenarioDictionary["Storyboard"]["Story"][0]["Act"]) != 1):
-                print(
-                    "[INFO][ScenarioParser::_processEntityEvents] Use Exactly one Act")
+                print("[INFO][ScenarioParser::_processEntityEvents] Use Exactly one Act")
                 return False
             if(len(self._scenarioDictionary["Storyboard"]["Story"][0]["Act"][0]["Conditions"]["Start"]["ConditionGroup"]) != 1):
-                print(
-                    "[INFO][ScenarioParser::_processEntityEvents] Use Exactly one ConditionGroup")
+                print("[INFO][ScenarioParser::_processEntityEvents] Use Exactly one ConditionGroup")
                 return False
             if(len(self._scenarioDictionary["Storyboard"]["Story"][0]["Act"][0]["Conditions"]["Start"]["ConditionGroup"][0]["Condition"]) != 1):
-                print(
-                    "[INFO][ScenarioParser::_processEntityEvents] Use Exactly one Condition")
+                print("[INFO][ScenarioParser::_processEntityEvents] Use Exactly one Condition")
                 return False
             if(self._scenarioDictionary["Storyboard"]["Story"][0]["Act"][0]["Conditions"]["Start"]["ConditionGroup"][0]["Condition"][0]["ByValue"]["SimulationTime"]["@rule"] != "equal_to" or
                     self._scenarioDictionary["Storyboard"]["Story"][0]["Act"][0]["Conditions"]["Start"]["ConditionGroup"][0]["Condition"][0]["ByValue"]["SimulationTime"]["@value"] != 0.0):
-                print(
-                    "[INFO][ScenarioParser::_processEntityEvents] unsupported starting condition")
+                print("[INFO][ScenarioParser::_processEntityEvents] unsupported starting condition")
                 return False
 
             # TODO INFO: starting condition = simulation time equals 0. So no TimedEventHandler necessary for now
@@ -230,16 +208,13 @@ class OpenScenarioParser(ScenarioParser):
                 # TODO sequenceName should be unique
                 sequenceName = sequence["@name"]
                 if(sequence["@numberOfExecutions"] != 1):
-                    print("[INFO][ScenarioParser::_processEntityEvents]",
-                          sequenceName, "Exactly one execution per sequence supported")
+                    print("[INFO][ScenarioParser::_processEntityEvents]", sequenceName, "Exactly one execution per sequence supported")
                     return False
                 if(len(sequence["Actors"]["Entity"]) != 1):
-                    print("[INFO][ScenarioParser::_processEntityEvents]",
-                          sequenceName, "Exactly one Actor per Sequence supported")
+                    print("[INFO][ScenarioParser::_processEntityEvents]", sequenceName, "Exactly one Actor per Sequence supported")
                     return False
                 if(len(sequence["Maneuver"]) != 1):
-                    print("[INFO][ScenarioParser::_processEntityEvents]",
-                          sequenceName, "Exactly one Maneuver per Sequence supported")
+                    print("[INFO][ScenarioParser::_processEntityEvents]", sequenceName, "Exactly one Maneuver per Sequence supported")
                     return False
 
                 for event in sequence["Maneuver"][0]["Event"]:
@@ -249,29 +224,23 @@ class OpenScenarioParser(ScenarioParser):
                         # actionName = action["@name"]
                         parsedAction = self._processAction(action)
                         if parsedAction == None:
-                            print(
-                                "[Error][ScenarioParser::_processEntityEvents] failed _processAction")
+                            print("[Error][ScenarioParser::_processEntityEvents] failed _processAction")
                             return False
 
                     parsedStartCondition = StartCondition()
                     if self._processStartCondition(event, parsedStartCondition) == False:
-                        print(
-                            "[Error][ScenarioParser::_processEntityEvents] failed _processStartCondition")
+                        print("[Error][ScenarioParser::_processEntityEvents] failed _processStartCondition")
                         return False
 
-                    actors = [actor
-                              for actor in self._actors
-                              if actor.getName() == sequence["Actors"]["Entity"][0]["@name"]]
-                    entityEvent = EntityEvent(
-                        parsedAction, actors, parsedStartCondition)
+                    actors = [actor for actor in self._actors if actor.getName() == sequence["Actors"]["Entity"][0]["@name"]]
+                    entityEvent = EntityEvent(parsedAction, actors, parsedStartCondition)
 
                     for actor in actors:
                         actor.addEntityEvent(entityEvent)
 
             return True
         except:
-            print(
-                "[Error][ScenarioParser::_processEntityEvents] Unexpected error:", sys.exc_info())
+            print("[Error][ScenarioParser::_processEntityEvents] Unexpected error:", sys.exc_info())
             return False
 
         return True
@@ -297,36 +266,29 @@ class OpenScenarioParser(ScenarioParser):
         try:
             if("Private" in action):
                 if("Longitudinal" in action["Private"]):
-                    parsedAction.longitudinal_speed = action["Private"][
-                        "Longitudinal"]["Speed"]["Target"]["Absolute"]["@value"]
-                    parsedAction.longitudinal_dynamics_shape = action[
-                        "Private"]["Longitudinal"]["Speed"]["Dynamics"]["@shape"]
-                    parsedAction.longitudinal_dynamics_rate = action[
-                        "Private"]["Longitudinal"]["Speed"]["Dynamics"]["@rate"]
+                    parsedAction.longitudinal_speed = action["Private"]["Longitudinal"]["Speed"]["Target"]["Absolute"]["@value"]
+                    parsedAction.longitudinal_dynamics_shape = action["Private"]["Longitudinal"]["Speed"]["Dynamics"]["@shape"]
+                    parsedAction.longitudinal_dynamics_rate = action["Private"]["Longitudinal"]["Speed"]["Dynamics"]["@rate"]
+                    parsedAction.tags.append(parsedAction.semanticTags["longitudinal"])
                 else:
-                    print(
-                        "[Error][ScenarioParser::_parseAction] Unsupported Private action:", action["Private"].keys())
+                    print("[Error][ScenarioParser::_parseAction] Unsupported Private action:", action["Private"].keys())
                     return None
             else:
-                print(
-                    "[Error][ScenarioParser::_parseAction] Only Private actions supported for now")
+                print("[Error][ScenarioParser::_parseAction] Only Private actions supported for now")
                 return None
 
         except:
-            print(
-                "[Error][ScenarioParser::_parseAction] Unexpected error:", sys.exc_info())
+            print("[Error][ScenarioParser::_parseAction] Unexpected error:", sys.exc_info())
             return None
 
         return parsedAction
 
     def _processStartCondition(self, event, startCondition):
         if(len(event["StartConditions"]["ConditionGroup"]) != 1):
-            print(
-                "[INFO][ScenarioParser::_processStartCondition] Use Exactly one ConditionGroup")
+            print("[INFO][ScenarioParser::_processStartCondition] Use Exactly one ConditionGroup")
             return False
         if(len(event["StartConditions"]["ConditionGroup"][0]["Condition"]) != 1):
-            print(
-                "[INFO][ScenarioParser::_processStartCondition] Use Exactly one Condition")
+            print("[INFO][ScenarioParser::_processStartCondition] Use Exactly one Condition")
             return False
 
         startCondition.priority = event["@priority"]
@@ -336,15 +298,13 @@ class OpenScenarioParser(ScenarioParser):
         condition = event["StartConditions"]["ConditionGroup"][0]["Condition"][0]
         if "ByEntity" in condition:
             if(len(condition["ByEntity"]["TriggeringEntities"]["Entity"]) != 1):
-                print(
-                    "[INFO][ScenarioParser::_processStartCondition] Use Exactly one triggering entity")
+                print("[INFO][ScenarioParser::_processStartCondition] Use Exactly one triggering entity")
                 return False
             # ignore condition["ByEntity"]["TriggeringEntities"]["@rule"]
             startCondition.triggeringEntity = condition["ByEntity"]["TriggeringEntities"]["Entity"][0]["@name"]
 
             if "ReachPosition" in condition["ByEntity"]["EntityCondition"]:
-                startCondition.pose_tolerance = condition["ByEntity"][
-                    "EntityCondition"]["ReachPosition"]["@tolerance"]
+                startCondition.pose_tolerance = condition["ByEntity"]["EntityCondition"]["ReachPosition"]["@tolerance"]
                 startCondition.pose = Pose(condition["ByEntity"]["EntityCondition"]["ReachPosition"]["Position"]["World"]["@x"],
                                            condition["ByEntity"]["EntityCondition"]["ReachPosition"]["Position"]["World"]["@y"],
                                            condition["ByEntity"]["EntityCondition"]["ReachPosition"]["Position"]["World"]["@z"],
@@ -352,12 +312,10 @@ class OpenScenarioParser(ScenarioParser):
                                            condition["ByEntity"]["EntityCondition"]["ReachPosition"]["Position"]["World"]["@p"],
                                            condition["ByEntity"]["EntityCondition"]["ReachPosition"]["Position"]["World"]["@h"])
             else:
-                print("[INFO][ScenarioParser::_processStartCondition] Unsupported EntityCondition:",
-                      condition["ByEntity"]["EntityCondition"].keys())
+                print("[INFO][ScenarioParser::_processStartCondition] Unsupported EntityCondition:",condition["ByEntity"]["EntityCondition"].keys())
                 return False
         else:
-            print(
-                "[Error][ScenarioParser::_processStartCondition] Unsupported Condition:", condition.keys())
+            print("[Error][ScenarioParser::_processStartCondition] Unsupported Condition:", condition.keys())
             return False
 
         return True
@@ -374,6 +332,5 @@ class OpenScenarioParser(ScenarioParser):
 
             return speed, pose
         except:
-            print(
-                "[Error][ScenarioParser::_parseSpeedAndPoseFromInitAction] Unexpected error:", sys.exc_info())
+            print("[Error][ScenarioParser::_parseSpeedAndPoseFromInitAction] Unexpected error:", sys.exc_info())
             return 0.0, None

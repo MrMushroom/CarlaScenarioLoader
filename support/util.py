@@ -10,6 +10,15 @@ class Action:
     def __init__(self, pose=None, timestamp=None):
         self.pose = pose
         self.timestamp = timestamp
+        self.tags = []
+
+        self.semanticTags = {
+            0: None,
+            1: "longitudinal",
+
+            "None": 0,
+            "longitudinal": 1
+        }
 
         self.longitudinal_speed = None
         self.longitudinal_dynamics_rate = None

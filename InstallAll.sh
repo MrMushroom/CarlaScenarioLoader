@@ -8,6 +8,12 @@ LIGHT_YELLOW='\033[0;93m'
 NC='\033[0m' # No Color
 
 
+echo -e "${GREEN}[INFO] Install ScenarioLoader dependencies${NC}"
+sudo apt-get install python-prctl libcap-dev
+pip3 install python-prctl
+echo -e "${LIGHT_GREEN}[INFO] Install ScenarioLoader dependencies - Done${NC}"
+
+
 echo -e "${GREEN}[INFO] Install the build tools and dependencies${NC}"
 sudo add-apt-repository ppa:ubuntu-toolchain-r/test
 sudo apt-get update

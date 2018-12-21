@@ -8,6 +8,7 @@
 import abc
 import carla
 import math
+import prctl
 import random
 import sys
 import threading
@@ -15,6 +16,7 @@ import time
 
 from collections import deque
 
+from . import maneuvers
 from .control import InputController
 from .observer import IObserver
 from .present import MondeoPlayerAgentHandler
@@ -24,21 +26,17 @@ from timed_event_handler import TimedEventHandler
 
 class Actor(IObserver, threading.Thread):
     def __init__(self, actorType, name, enableLogging, pose, speed, timestamp):
-        threading.Thread.__init__(self)
-
-        self.name = name
-
+        threading.Thread.__init__(self, name=name)
         self._actorType = actorType
         self._name = name
         self._events = deque()
         self._isLogging = enableLogging
         self._isConnected = False
         self._isRunning = False
-        self._actionQueue = deque()
+        self._action = None
         self._currentPose = None
         self._currentSpeed = None
         self._currentTimeStamp = None
-        self._previousTimeStamp = None
         self._executionQueue = deque()
         self._desiredPose = pose
         self._desiredSpeed = speed
@@ -68,20 +66,14 @@ class Actor(IObserver, threading.Thread):
         self._desiredPose = pose
         self._desiredTimeStamp = TimeStamp()
 
-    def addAction(self, action):
-        self._dataExchangeLock.acquire()
-        self._actionQueue.append(action)
-        self._dataExchangeLock.release()
-
     def setAction(self, action):
         self._dataExchangeLock.acquire()
         self._setAction(action)
         self._dataExchangeLock.release()
-    
-    def _setAction(self, action):
-        self._actionQueue = deque([action])
-        self._executionQueue.clear()
 
+    def _setAction(self, action):
+        self._action = action
+        self._executionQueue.clear()
 
     def startActing(self):
         if self._isConnected == False:
@@ -104,6 +96,7 @@ class Actor(IObserver, threading.Thread):
         self.startActing()
 
     def run(self):
+        prctl.set_name(self._name)
         self._actorThread()
 
     def update(self, event):
@@ -148,11 +141,11 @@ class CarlaActor(Actor):
 
             # wait for vehicle spawn
             if(transform.location.x != 0 or transform.location.y != 0 or transform.location.z != 0 or
-                transform.rotation.roll != 0 or transform.rotation.pitch != 0 or transform.rotation.yaw != 0):
+                    transform.rotation.roll != 0 or transform.rotation.pitch != 0 or transform.rotation.yaw != 0):
                 # desired location is not origin -> wait for vehicle spawn
                 transform = self.__carlaActor.get_transform()
                 while(transform.location.x == 0 and transform.location.y == 0 and transform.location.z == 0 and
-                    transform.rotation.roll == 0 and transform.rotation.pitch == 0 and transform.rotation.yaw == 0):
+                      transform.rotation.roll == 0 and transform.rotation.pitch == 0 and transform.rotation.yaw == 0):
                     transform = self.__carlaActor.get_transform()
 
             TimedEventHandler().subscribe(self._name, self.update)
@@ -180,13 +173,13 @@ class CarlaActor(Actor):
         self._dataExchangeLock.acquire()
         self._events.append(event)
         self._dataExchangeLock.release()
-    
+
     def checkConditionTriggered(self, sc):
         isConditionTriggered = False
 
         if sc.pose != None:
-            distance = math.sqrt(pow(self._currentPose.getPosition()[0]-sc.pose.getPosition()[0], 2.0) + 
-                                 pow(self._currentPose.getPosition()[1]-sc.pose.getPosition()[1], 2.0) + 
+            distance = math.sqrt(pow(self._currentPose.getPosition()[0]-sc.pose.getPosition()[0], 2.0) +
+                                 pow(self._currentPose.getPosition()[1]-sc.pose.getPosition()[1], 2.0) +
                                  pow(self._currentPose.getPosition()[2]-sc.pose.getPosition()[2], 2.0))
             if distance < sc.pose_tolerance:
                 isConditionTriggered = True
@@ -196,7 +189,6 @@ class CarlaActor(Actor):
             print("[WARNING][CarlaActor::checkConditionTriggered] Implementation Missing. This should not be reached")
 
         return isConditionTriggered
-
 
     def handleEvents(self):
         # check the startconditions
@@ -224,8 +216,8 @@ class CarlaActor(Actor):
                         else:
                             sc.timestampConditionTriggered = TimedEventHandler.getCurrentSimTimeStamp()
                     else:
-                        pass # edge falling
-       
+                        pass  # edge falling
+
         remainingEvents = deque()
         while(len(self._events) > 0):
             event = self._events.popleft()
@@ -247,49 +239,25 @@ class CarlaActor(Actor):
 
     def handleExecutionQueue(self):
         # check if queue full
+
         if len(self._executionQueue) > 1:
-            return len(self._executionQueue)
+            if self._executionQueue[-1].timestamp >= self._currentTimeStamp:
+                return len(self._executionQueue)  # full and useable
+
+        # current Pose is always the result of the previous TimeStamp
+        if(self._previousTimeStamp is None):
+            self._previousTimeStamp = self._currentTimeStamp  # happens at startup
 
         # queue hast just one item left, start magic execution stuff
-        if len(self._actionQueue) == 0:
-            # fallback (idle-speed)
-            if self._desiredSpeed >= 0:
-                s = 0.01 # 10mm
-                v = self._desiredSpeed * 1000.0 / 3600
-                dt = s / v
-
-                yaw = self._currentPose.getOrientation()[2]
-                pitch = self._currentPose.getOrientation()[1]
-                dx = s*math.cos(yaw)*math.cos(pitch)
-                dy = s*math.sin(yaw)*math.cos(pitch)
-                dz = s*math.sin(pitch)
-
-                if(self._previousTimeStamp is None):
-                    self._previousTimeStamp = self._currentTimeStamp # may happen at startup
-                sec, usec = self._previousTimeStamp.getInt()
-
-                pointCount = 1 # pointCount <= 100 guarantees 0.5m z difference for streets with 11.5% elevation, as long as the car is parallel to the street
-                while(pointCount<=1000):
-                    pose = Pose(x=self._currentPose.getPosition()[0] + dx*pointCount,
-                                y=self._currentPose.getPosition()[1] + dy*pointCount,
-                                z=self._currentPose.getPosition()[2] + dz*pointCount,
-                                roll=self._currentPose.getOrientation()[0],
-                                pitch=self._currentPose.getOrientation()[1],
-                                yaw=self._currentPose.getOrientation()[2])
-                    timestamp = TimeStamp(sec, usec)
-                    timestamp.addFloat(dt*pointCount)
-
-                    self._executionQueue.append(Action(pose, timestamp))
-                    pointCount+=1
-            else:
-                pass # no action, no speed -> just stay
+        if self._action is None:
+            self._executionQueue = maneuvers.constantStraightAhead(self._currentPose, self._previousTimeStamp, self._desiredSpeed)
         else:
-            action = self._actionQueue.popleft()
             # TODO build a better decision tree for the action
-            if(action.longitudinal_speed != None and action.longitudinal_dynamics_shape != None and action.longitudinal_dynamics_rate != None):
+            if(len(self._action.tags) == 1 and self._action.semanticTags["longitudinal"] in self._action.tags):
                 # straight ahead
-                if(action.longitudinal_dynamics_shape == "step"):
-                    self._desiredSpeed = action.longitudinal_speed
+                if(self._action.longitudinal_dynamics_shape == "step"):
+                    self._desiredSpeed = self._action.longitudinal_speed
+                    self._executionQueue = maneuvers.constantStraightAhead(self._currentPose, self._previousTimeStamp, self._desiredSpeed)
                 else:
                     print("[WARNING][CarlaActor::handleExecutionQueue] Implementation Missing for longitudinal action!")
             else:
@@ -319,28 +287,34 @@ class CarlaActor(Actor):
         self.handleExecutionQueue()
 
         # TODO check: due to execution stack, there might be an inconsitency (missing pose for timestamp) when stack gets empty
-        action = None
+        prevAction = None
+        nextAction = None
         while len(self._executionQueue) > 0:
-            if(self._executionQueue[0].timestamp <= self._currentTimeStamp):
-                action  = self._executionQueue.popleft()
-            else:
+            prevAction = nextAction
+            nextAction = self._executionQueue.popleft()
+            if(nextAction.timestamp >= self._currentTimeStamp):
                 break
-        
-        if action != None:
-            self._desiredPose = action.pose
-        else:
+
+        if nextAction is None:
             self._desiredPose = self._currentPose
-        
-        # if self._name == "Target1":
-        #     print(self._name, len(self._events), len(self._actionQueue), "\t", len(self._executionQueue), "\t", math.fabs(self._currentPose.getPosition()[0] - self._desiredPose.getPosition()[0]), "\t", self._desiredPose)
+        elif nextAction.timestamp == self._currentTimeStamp:
+            self._desiredPose = nextAction.pose
+        elif prevAction is None:
+            prevAction = Action(self._currentPose, self._previousTimeStamp)
+            self._desiredPose = maneuvers.interpolateActions(prevAction, nextAction, self._currentTimeStamp)
+        else:  # (prevAction is not None and nextAction is not None)
+            self._desiredPose = maneuvers.interpolateActions(prevAction, nextAction, self._currentTimeStamp)
 
         # send data to Carla
         transform = carla.Transform(carla.Location(self._desiredPose.getPosition()[0],
-                                                self._desiredPose.getPosition()[1],
-                                                self._desiredPose.getPosition()[2]),
+                                                   self._desiredPose.getPosition()[1],
+                                                   self._desiredPose.getPosition()[2]),
                                     carla.Rotation(math.degrees(self._desiredPose.getOrientation()[1]),
-                                                math.degrees(self._desiredPose.getOrientation()[2]),
-                                                math.degrees(self._desiredPose.getOrientation()[0])))
+                                                   math.degrees(self._desiredPose.getOrientation()[2]),
+                                                   math.degrees(self._desiredPose.getOrientation()[0])))
+
+        if self._name == "Target1":
+            print(self._name, TimedEventHandler().getSimTimeDiff(),  transform)
 
         self.__carlaActor.set_transform(transform)
 
