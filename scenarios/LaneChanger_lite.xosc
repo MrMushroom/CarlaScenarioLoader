@@ -148,7 +148,7 @@
                 </Actors>
                 <Maneuver name="Maneuver1">
                     <Event name="Event1" priority="overwrite">
-                        <Action name="Action1">
+                        <Action name="Action1.1">
                             <Private>
                                 <Longitudinal>
                                     <Speed>
@@ -171,6 +171,48 @@
                                             <ReachPosition tolerance="1.0">
 												<Position>
 													<World x="270.5" y="129.5" z="38.5" h="3.1415926" p="0" r="0"/>
+												</Position>
+											</ReachPosition>
+                                        </EntityCondition>
+                                    </ByEntity>
+                                </Condition>
+                            </ConditionGroup>
+                        </StartConditions>
+                    </Event>
+                    <Event name="Event2" priority="overwrite">
+                        <Action name="Action2.1">
+                            <Private>
+                                <Routing>
+                                    <FollowTrajectory>
+                                        <Trajectory name="RechtsKurve1" closed="false" domain="distance">
+                                            <Vertex reference="0.0">
+												<Position><RelativeWorld object="Target1" dx="0.0" dy="0.0" dz="0.0"/></Position>
+												<Shape><Clothoid curvature="0.0625" curvatureDot="0.0" length="25.1327412287"/></Shape>
+											</Vertex>
+                                            <Vertex reference="25.2">
+												<Position><RelativeWorld object="Target1" dx="16.0" dy="-16.0"><Orientation type="relative" h="3.1415926"/></RelativeWorld></Position>
+												<Shape><Polyline/></Shape>
+											</Vertex>
+                                        </Trajectory>
+                                        <Longitudinal>
+                                            <None/>
+                                        </Longitudinal>
+                                        <Lateral purpose="steering"/>
+                                    </FollowTrajectory>
+                                </Routing>
+                            </Private>
+                        </Action>
+                        <StartConditions>
+                            <ConditionGroup>
+                                <Condition name="StartCondition1" delay="0" edge="rising">
+                                    <ByEntity>
+                                        <TriggeringEntities rule="any">
+                                            <Entity name="Target1"/>
+                                        </TriggeringEntities>
+                                        <EntityCondition>
+                                            <ReachPosition tolerance="1.0">
+												<Position>
+													<World x="230.5" y="129.5" z="38.5" h="3.1415926" p="0" r="0"/>
 												</Position>
 											</ReachPosition>
                                         </EntityCondition>
