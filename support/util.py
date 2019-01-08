@@ -15,14 +15,25 @@ class Action:
         self.semanticTags = {
             0: None,
             1: "longitudinal",
+            10: "Trajectory",
 
             "None": 0,
-            "longitudinal": 1
+            "longitudinal": 1,
+            "Trajectory": 10
         }
 
         self.longitudinal_speed = None
         self.longitudinal_dynamics_rate = None
         self.longitudinal_dynamics_shape = None
+
+        self.trajectory_lateral_purpose = None  # position/steering
+        self.trajectory_longitudinal_none = None  # True/False
+        self.trajectory_longitudinal_timing_offset = None
+        self.trajectory_longitudinal_timing_scale = None
+        self.trajectory_longitudinal_timing_domain_absolute = None
+        self.trajectory_longitudinal_timing_domain_relative = None
+        self.trajectory_vertex = []
+        self.trajectory_vertex_domain = None  # time/distance
 
 
 class EntityCondition:
@@ -110,3 +121,65 @@ class Pose:
 
     def __str__(self):
         return str(self.__x) + ", " + str(self.__y) + ", " + str(self.__z) + " " + str(self.__roll) + ", " + str(self.__pitch) + ", " + str(self.__yaw)
+
+
+class Vertex:
+    def __init__(self, reference):
+        self.reference = reference
+        self.pose = None
+        self.shape = None
+        self.positioning = None
+        self.orientation = None
+        self.relativeObject = None
+
+        self.shapeTags = {
+            0: None,
+            1: "Clothoid",
+            2: "Polyline",
+
+            "None": 0,
+            "Clothoid": 1,
+            "Polyline": 2
+        }
+
+        self.positioningTags = {
+            0: None,
+            1: "relative",
+            2: "absolute",
+
+            "None": 0,
+            "relative": 1,
+            "absolute": 2
+        }
+
+        self.clothoid_curvature = None
+        self.clothoid_curvatureDot = None
+        self.clothoid_length = None
+
+    def __lt__(self, other):
+        if isinstance(other, Vertex):
+            return self.reference < other.reference
+        return False
+
+    def __le__(self, other):
+        if isinstance(other, Vertex):
+            return self.reference <= other.reference
+        return False
+
+    def __gt__(self, other):
+        if isinstance(other, Vertex):
+            return self.reference > other.reference
+        return False
+
+    def __ge__(self, other):
+        if isinstance(other, Vertex):
+            return self.reference >= other.reference
+        return False
+
+    def __eq__(self, other):
+        if isinstance(other, Vertex):
+            return self.reference == other.reference
+        return False
+
+    def __ne__(self, other):
+        return not self.__eq__(other)

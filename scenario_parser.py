@@ -19,7 +19,7 @@ from pprint import pprint
 
 from support.actor import CarlaActor
 from support.events import EntityEvent, StartCondition
-from support.util import Action, Pose
+from support.util import Action, Pose, Vertex
 
 
 class ScenarioParser():
@@ -270,6 +270,21 @@ class OpenScenarioParser(ScenarioParser):
                     parsedAction.longitudinal_dynamics_shape = action["Private"]["Longitudinal"]["Speed"]["Dynamics"]["@shape"]
                     parsedAction.longitudinal_dynamics_rate = action["Private"]["Longitudinal"]["Speed"]["Dynamics"]["@rate"]
                     parsedAction.tags.append(parsedAction.semanticTags["longitudinal"])
+                elif ("Routing" in action["Private"]):
+                    if("FollowTrajectory" in action["Private"]["Routing"]):
+                        parsedAction.tags.append(parsedAction.semanticTags["Trajectory"])
+                        parsedAction.trajectory_lateral_purpose = action["Private"]["Routing"]["FollowTrajectory"]["Lateral"]["@purpose"]
+                        if("None" in action["Private"]["Routing"]["FollowTrajectory"]["Longitudinal"]):
+                            parsedAction.trajectory_longitudinal_none = True
+                        else:
+                            print("[Error][ScenarioParser::_parseAction] Unsupported Longitudinal in FollowTrajectory:", action["Private"]["Routing"]["FollowTrajectory"]["Longitudinal"].keys())
+                        if("CatalogReference" in action["Private"]["Routing"]["FollowTrajectory"]):
+                            print("[Error][ScenarioParser::_parseAction] Unsupported CatalogReference in FollowTrajectory")
+                        else:
+                            parsedAction.trajectory_vertex_domain = action["Private"]["Routing"]["FollowTrajectory"]["Trajectory"]["@domain"]
+                            parsedAction.trajectory_vertex = self._parseTrajectory(action["Private"]["Routing"]["FollowTrajectory"]["Trajectory"])
+                    else:
+                        print("[Error][ScenarioParser::_parseAction] Unsupported Routing in Private action:", action["Private"]["Routing"].keys())
                 else:
                     print("[Error][ScenarioParser::_parseAction] Unsupported Private action:", action["Private"].keys())
                     return None
@@ -312,7 +327,7 @@ class OpenScenarioParser(ScenarioParser):
                                            condition["ByEntity"]["EntityCondition"]["ReachPosition"]["Position"]["World"]["@p"],
                                            condition["ByEntity"]["EntityCondition"]["ReachPosition"]["Position"]["World"]["@h"])
             else:
-                print("[INFO][ScenarioParser::_processStartCondition] Unsupported EntityCondition:",condition["ByEntity"]["EntityCondition"].keys())
+                print("[INFO][ScenarioParser::_processStartCondition] Unsupported EntityCondition:", condition["ByEntity"]["EntityCondition"].keys())
                 return False
         else:
             print("[Error][ScenarioParser::_processStartCondition] Unsupported Condition:", condition.keys())
@@ -334,3 +349,51 @@ class OpenScenarioParser(ScenarioParser):
         except:
             print("[Error][ScenarioParser::_parseSpeedAndPoseFromInitAction] Unexpected error:", sys.exc_info())
             return 0.0, None
+
+    def _parseTrajectory(self, trajectory):
+        vertices = []
+
+        if (trajectory["@closed"] == False):
+            for vertex in trajectory["Vertex"]:
+                parsedVertex = Vertex(vertex["@reference"])
+
+                if("RelativeWorld" in vertex["Position"]):
+                    parsedVertex.positioning = parsedVertex.positioningTags["relative"]
+                    parsedVertex.relativeObject = vertex["Position"]["RelativeWorld"]["@object"]
+                    x = vertex["Position"]["RelativeWorld"]["@dx"]
+                    y = vertex["Position"]["RelativeWorld"]["@dy"]
+                    z = 0.0
+                    if "@dz" in vertex["Position"]["RelativeWorld"]:
+                        z = vertex["Position"]["RelativeWorld"]["@dz"]
+                    r = 0.0
+                    p = 0.0
+                    h = 0.0
+                    if("Orientation" in vertex["Position"]["RelativeWorld"]):
+                        self.orientation = parsedVertex.positioningTags[vertex["Position"]["RelativeWorld"]["Orientation"]["@type"]]
+                        if "@r" in vertex["Position"]["RelativeWorld"]:
+                            r = vertex["Position"]["RelativeWorld"]["@r"]
+                        if "@p" in vertex["Position"]["RelativeWorld"]:
+                            p = vertex["Position"]["RelativeWorld"]["@p"]
+                        if "@h" in vertex["Position"]["RelativeWorld"]:
+                            h = vertex["Position"]["RelativeWorld"]["@h"]
+                    parsedVertex.pose = Pose(x=x,y=y,z=z,roll=r,pitch=p,yaw=h)
+                else:
+                    print("[Error][ScenarioParser::_parseTrajectory] Unsupported Position:", vertex["Position"].keys())
+
+                if("Clothoid" in vertex["Shape"]):
+                    parsedVertex.shape = parsedVertex.shapeTags["Clothoid"]
+                    parsedVertex.clothoid_curvature = vertex["Shape"]["Clothoid"]["@curvature"]
+                    parsedVertex.clothoid_curvatureDot = vertex["Shape"]["Clothoid"]["@curvatureDot"]
+                    parsedVertex.clothoid_length = vertex["Shape"]["Clothoid"]["@length"]
+                elif("Polyline" in vertex["Shape"]):
+                    parsedVertex.shape = parsedVertex.shapeTags["Polyline"]
+                else:
+                    print("[Error][ScenarioParser::_parseTrajectory] Unsupported Shape:", vertex["Shape"].keys())
+
+                vertices.append(parsedVertex)
+        else:
+            print("[Error][ScenarioParser::_parseTrajectory] Unsupported @closed:", trajectory["@closed"])
+
+        vertices.sort()
+
+        return vertices
