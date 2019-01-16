@@ -5,7 +5,7 @@
 # This work is licensed under the terms of the MIT license.
 # For a copy, see <https://opensource.org/licenses/MIT>.
 
-from threading import Lock
+from threading import Barrier, Lock
 
 from support.singleton import Singleton
 from support.util import TimeStamp
@@ -17,6 +17,7 @@ class TimedEventHandler(metaclass=Singleton):
         self.__previousSimTime = None
         self.__events = None
         self.__subscribers = {}
+        self.__syncBarrier = Barrier(0)
         self.__syncLock = Lock()
         self.__cleared = True
 
@@ -59,17 +60,32 @@ class TimedEventHandler(metaclass=Singleton):
         self.__notify()
         self.__syncLock.release()
 
+    def stop(self):
+        self.__syncLock.acquire()
+        self.__syncBarrier.abort()
+        self.__notify()
+        self.__syncLock.release()
+
     def subscribe(self, name, updateMethod):
         self.__syncLock.acquire()
+        if self.__syncBarrier.n_waiting != 0:
+            raise Exception(name, "tried to subscribe during runtime (syncBarrier has", self.__syncBarrier.n_waiting, "threads waiting)")
         if name in self.__subscribers:
             raise Exception(name, "already subscribed")
         else:
+            self.__syncBarrier = Barrier(self.__syncBarrier.parties + 1)
             self.__subscribers[name] = updateMethod
         self.__syncLock.release()
 
+    def syncBarrier(self):
+        self.__syncBarrier.wait(timeout=1.0)
+
     def unsubscribe(self, name):
         self.__syncLock.acquire()
+        if self.__syncBarrier.n_waiting != 0:
+            raise Exception(name, "tried to unsubscribe during runtime (syncBarrier has", self.__syncBarrier.n_waiting, "threads waiting)")
         del self.__subscribers[name]
+        self.__syncBarrier = Barrier(self.__syncBarrier.parties - 1)
         self.__syncLock.release()
 
     def __notify(self):

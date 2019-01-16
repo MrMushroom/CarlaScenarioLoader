@@ -18,6 +18,7 @@ echo -e "${GREEN}[INFO] Install the build tools and dependencies${NC}"
 sudo add-apt-repository ppa:ubuntu-toolchain-r/test
 sudo apt-get update
 sudo apt-get install build-essential clang-5.0 lld-5.0 g++-7 ninja-build python python-pip python-dev tzdata sed curl wget unzip autoconf libtool
+sudo apt-get install build-essential clang-5.0 lld-5.0 g++-7 cmake ninja-build python python-pip python-dev python3-dev python3-pip libtiff5-dev libjpeg-dev tzdata sed curl wget unzip autoconf libtool
 echo -e "${LIGHT_GREEN}[INFO] Install the build tools and dependencies - Done${NC}"
 
 echo -e "${GREEN}[INFO] Install clang and libc++${NC}"
@@ -55,17 +56,17 @@ else
   echo -e "${LIGHT_GREEN}[INFO] ~/UnrealEngine_4.19 already exists. Delete for reinstall${NC}"
 fi
 
-echo -e "${GREEN}[INFO] Install carla 0.9.1${NC}"
+echo -e "${GREEN}[INFO] Install carla 0.9.2${NC}"
 if [ ! -d ~/carla ]; then
   git clone https://github.com/carla-simulator/carla.git
   cd ~/carla
-  git checkout 0.9.1
+  git checkout 0.9.2
   ./Update.sh
   export UE4_ROOT=~/UnrealEngine_4.19
   make CarlaUE4Editor
-  echo -e "${LIGHT_GREEN}[INFO] Install carla-sync-wip - Done${NC}"
+  echo -e "${LIGHT_GREEN}[INFO] Install carla 0.9.2 - Done${NC}"
 else
-  echo -e "${LIGHT_GREEN}[INFO] ~/carla-sync-wip already exists. Delete for reinstall${NC}"
+  echo -e "${LIGHT_GREEN}[INFO] ~/carla already exists. Delete for reinstall${NC}"
 fi
 
 echo -e "${GREEN}[INFO] Install Carla PythonAPI${NC}"
@@ -76,7 +77,8 @@ then
   # PythonAPI dependencies -> will kill ros-kinetic
   sudo apt-get install libpng16-16 libpng16-dev libtiff5 libtiff5-dev libjpeg-dev 
   sudo apt-get install python-setuptools python3-setuptools python3 python3-pip python3-dev libxml2-dev libxslt-dev
-  pip install --user setuptools nose2
+  pip2 install --user setuptools nose2
+  pip3 install --user setuptools nose2
   cd ~/carla
   export UE4_ROOT=~/UnrealEngine_4.19
   make PythonAPI

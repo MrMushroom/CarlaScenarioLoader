@@ -7,6 +7,7 @@
 
 import abc
 import carla
+import datetime
 import math
 import prctl
 import random
@@ -123,7 +124,9 @@ class CarlaActor(Actor):
 
     def connectToSimulatorAndEvenHandler(self, ipAddress, port, timeout):
         try:
+            prctl.set_name("sim" + self._name)
             self._client = carla.Client(ipAddress, port)
+            prctl.set_name("burn")
             self._client.set_timeout(timeout)
             print("# spawning actor", self._name)
             blueprint = self._client.get_world().get_blueprint_library().find("vehicle.lincoln.mkz2017")
@@ -313,8 +316,8 @@ class CarlaActor(Actor):
                                                    math.degrees(self._desiredPose.getOrientation()[2]),
                                                    math.degrees(self._desiredPose.getOrientation()[0])))
 
-        if self._name == "Target1":
-            print(self._name, TimedEventHandler().getSimTimeDiff(),  transform)
+        # if self._name == "Target1":
+        #     print(self._name, TimedEventHandler().getSimTimeDiff(),  transform)
 
         self.__carlaActor.set_transform(transform)
 
@@ -365,10 +368,22 @@ class CarlaActor(Actor):
 
             self._dataExchangeLock.release()
 
+            # TODO INFO time.sleep necessary to cool down CPU. System is not fast enough to handle so much locking (kernel switches)
+            time.sleep(0.2)
+
+            try:
+                TimedEventHandler().syncBarrier()
+            except threading.BrokenBarrierError:
+                pass
+
+            # a = datetime.datetime.now()
             if not self._wakeUp.wait(self._timeOut):
                 print("[Error][CarlaActor::_actorThread] WakeUp Timeout")
                 self._isRunning = False
 
             self._wakeUp.clear()
+            # b = datetime.datetime.now()
+            # c = b-a
+            # print(c.microseconds)
 
         print (self._name, "stopped acting")

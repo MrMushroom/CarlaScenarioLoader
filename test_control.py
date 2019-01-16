@@ -82,25 +82,26 @@ class TestControl():
         return True
 
     def executeTest(self):
+        # run timedEventHandler
+        print("# run timedEventHandler")
+
         # run actors
         print("# run actors")
         for actor in self.__actors:
             actor.startActing()
 
-        # run timedEventHandler
-        print("# run timedEventHandler")
-
         # run Test - implement logic
         print("# run Test - implement logic!!!")
         input("Press <Enter> to stop simulation")
-
-        # stop timedEventHandler
-        print("# stop timedEventHandler - skipped events")
 
         # stop actors
         print("# stop actors")
         for actor in self.__actors:
             actor.stopActing()
+
+        # stop timedEventHandler
+        print("# stop timedEventHandler - skipped events")
+        TimedEventHandler().stop()
 
         return False
 

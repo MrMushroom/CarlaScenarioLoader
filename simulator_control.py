@@ -8,6 +8,7 @@
 import abc
 import carla
 import datetime
+import prctl
 import sys
 import threading
 import time
@@ -64,7 +65,9 @@ class CarlaSimulatorControl(SimulatorControl):
 
     def connect(self):
         try:
+            prctl.set_name("carlaSimCtl")
             self._client = carla.Client(self._simIP, self._simPort)
+            prctl.set_name("burn")
             self._client.set_timeout(self._simTimeout)
             print("[INFO] Connecting", self._client.get_client_version(), "to", self._client.get_server_version())
             self._isConnected = True
@@ -89,9 +92,13 @@ class CarlaSimulatorControl(SimulatorControl):
         self._client.get_world().on_tick(self.run_cb)
 
     def run_cb(self, timestamp):
+        #import ctypes
+        # print(ctypes.CDLL('libc.so.6').syscall(186))
+        # prctl.set_name("run_cb")
         self._statusLock.acquire()
         self._isRunning = True
         self._statusLock.release()
+        # TODO BUG! if carla is killed during status lock hold, it is never freed!
 
         TimedEventHandler().updateSimStep(timestamp)
         ClockHandler().process()

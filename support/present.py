@@ -5,6 +5,7 @@ Inspired by carla_ros_bridge Carla 0.8.4
 
 import math
 import numpy
+import prctl
 import rospy
 import tf
 

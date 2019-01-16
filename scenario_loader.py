@@ -7,6 +7,7 @@
 
 import inspect
 import os
+import prctl
 import sys
 
 from test_control import TestControl
@@ -49,5 +50,5 @@ def main():
 
 
 if __name__ == '__main__':
-
+    prctl.set_name("init")
     main()
