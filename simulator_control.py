@@ -79,6 +79,7 @@ class CarlaSimulatorControl(SimulatorControl):
             return False
 
     def disconnect(self):
+        # TODO BUG Deadlock. At program end, run_cb has lock somewhere
         self._statusLock.acquire()
         self._isRunning = False
         self._isConnected = False
@@ -89,16 +90,15 @@ class CarlaSimulatorControl(SimulatorControl):
         print("[ERROR][CarlaSimulatorControl::loadScene] loadScene not implemented into Carla 0.9.0")
 
     def run(self):
+        self._isRunning = True
         self._client.get_world().on_tick(self.run_cb)
 
     def run_cb(self, timestamp):
-        #import ctypes
-        # print(ctypes.CDLL('libc.so.6').syscall(186))
-        # prctl.set_name("run_cb")
         self._statusLock.acquire()
-        self._isRunning = True
+        isRunning = self._isRunning
         self._statusLock.release()
-        # TODO BUG! if carla is killed during status lock hold, it is never freed!
 
-        TimedEventHandler().updateSimStep(timestamp)
-        ClockHandler().process()
+        # TODO BUG Deadlock. if wont prevent deadlocking at program end with disconnect
+        if isRunning:
+            TimedEventHandler().updateSimStep(timestamp)
+            ClockHandler().process()

@@ -93,14 +93,14 @@
                         <Speed>
                             <Dynamics shape="step" rate="0"/>
                             <Target>
-                                <Absolute value="5.0"/>
+                                <Absolute value="20.0"/>
                             </Target>
                         </Speed>
                     </Longitudinal>
                 </Action>
                 <Action>
                     <Position>
-                        <World x="280.5" y="129.5" z="38.5" h="3.1415926" p="0" r="0"/>
+                        <World x="150.5" y="129.5" z="38.5" h="3.1415926" p="0" r="0"/>
                     </Position>
                 </Action>
             </Private>
@@ -154,7 +154,7 @@
                                     <Speed>
                                         <Dynamics shape="step" rate="0.0"/>
                                         <Target>
-                                            <Absolute value="20.0"/>
+                                            <Absolute value="5.0"/>
                                         </Target>
                                     </Speed>
                                 </Longitudinal>
@@ -170,7 +170,7 @@
                                         <EntityCondition>
                                             <ReachPosition tolerance="1.0">
 												<Position>
-													<World x="270.5" y="129.5" z="38.5" h="3.1415926" p="0" r="0"/>
+													<World x="110.5" y="129.5" z="38.5" h="3.1415926" p="0" r="0"/>
 												</Position>
 											</ReachPosition>
                                         </EntityCondition>
@@ -187,10 +187,10 @@
                                         <Trajectory name="RechtsKurve1" closed="false" domain="distance">
                                             <Vertex reference="0.0">
 												<Position><RelativeWorld object="Target1" dx="0.0" dy="0.0" dz="0.0"/></Position>
-												<Shape><Clothoid curvature="0.0625" curvatureDot="0.0" length="25.1327412287"/></Shape>
+												<Shape><Clothoid curvature="0.1" curvatureDot="0.0" length="15.7079632679"/></Shape>
 											</Vertex>
-                                            <Vertex reference="25.2">
-												<Position><RelativeWorld object="Target1" dx="16.0" dy="-16.0"><Orientation type="relative" h="3.1415926"/></RelativeWorld></Position>
+                                            <Vertex reference="15.8">
+												<Position><RelativeWorld object="Target1" dx="-10.0" dy="-10.0"><Orientation type="relative" h="1.5707963"/></RelativeWorld></Position>
 												<Shape><Polyline/></Shape>
 											</Vertex>
                                         </Trajectory>
@@ -204,6 +204,38 @@
                         </Action>
                         <StartConditions>
                             <ConditionGroup>
+                                <Condition name="StartCondition2" delay="0" edge="rising">
+                                    <ByEntity>
+                                        <TriggeringEntities rule="any">
+                                            <Entity name="Target1"/>
+                                        </TriggeringEntities>
+                                        <EntityCondition>
+                                            <ReachPosition tolerance="1.0">
+												<Position>
+													<World x="100.5" y="129.5" z="38.5" h="3.1415926" p="0" r="0"/>
+												</Position>
+											</ReachPosition>
+                                        </EntityCondition>
+                                    </ByEntity>
+                                </Condition>
+                            </ConditionGroup>
+                        </StartConditions>
+                    </Event>
+                    <Event name="Event3" priority="overwrite">
+                        <Action name="Action3.1">
+                            <Private>
+                                <Longitudinal>
+                                    <Speed>
+                                        <Dynamics shape="step" rate="0.0"/>
+                                        <Target>
+                                            <Absolute value="5.0"/>
+                                        </Target>
+                                    </Speed>
+                                </Longitudinal>
+                            </Private>
+                        </Action>
+                        <StartConditions>
+                            <ConditionGroup>
                                 <Condition name="StartCondition1" delay="0" edge="rising">
                                     <ByEntity>
                                         <TriggeringEntities rule="any">
@@ -212,7 +244,7 @@
                                         <EntityCondition>
                                             <ReachPosition tolerance="1.0">
 												<Position>
-													<World x="230.5" y="129.5" z="38.5" h="3.1415926" p="0" r="0"/>
+													<World x="90.5" y="119.5" z="38.5" h="1.5707963" p="0" r="0"/>
 												</Position>
 											</ReachPosition>
                                         </EntityCondition>

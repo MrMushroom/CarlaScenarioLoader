@@ -263,8 +263,25 @@ class CarlaActor(Actor):
                     self._executionQueue = maneuvers.constantStraightAhead(self._currentPose, self._previousTimeStamp, self._desiredSpeed)
                 else:
                     print("[WARNING][CarlaActor::handleExecutionQueue] Implementation Missing for longitudinal action!")
+            elif(len(self._action.tags) == 1 and self._action.semanticTags["Trajectory"] in self._action.tags):
+                # TODO info
+                self._desiredSpeed = self._desiredSpeed
+                if (self._action.trajectory_lateral_purpose == "steering"):
+                    if(self._action.trajectory_longitudinal_none == False):
+                        print("[WARNING][CarlaActor::handleExecutionQueue] Implementation Missing for Trajectory action (longitudinal_none == True)!")
+                    if(self._action.trajectory_longitudinal_timing_offset or
+                            self._action.trajectory_longitudinal_timing_scale or
+                            self._action.trajectory_longitudinal_timing_domain_absolute or
+                            self._action.trajectory_longitudinal_timing_domain_relative):
+                        print("[WARNING][CarlaActor::handleExecutionQueue] Implementation Missing for Trajectory action (trajectory_timing)!")
+                    else:
+                        self._executionQueue = maneuvers.trajectory(self._action.trajectory_vertex, self._action.trajectory_vertex_domain, self._currentPose, self._previousTimeStamp, self._desiredSpeed)
+                else:
+                    print("[WARNING][CarlaActor::handleExecutionQueue] Implementation Missing for Trajectory action (lateral_purpose)!")
             else:
                 print("[WARNING][CarlaActor::handleExecutionQueue] Implementation Missing. Unable to handle new action type")
+                
+            self._action = None
         return len(self._executionQueue)
 
     def handleEgo(self):
@@ -369,7 +386,7 @@ class CarlaActor(Actor):
             self._dataExchangeLock.release()
 
             # TODO INFO time.sleep necessary to cool down CPU. System is not fast enough to handle so much locking (kernel switches)
-            time.sleep(0.2)
+            # time.sleep(0.2)
 
             try:
                 TimedEventHandler().syncBarrier()
