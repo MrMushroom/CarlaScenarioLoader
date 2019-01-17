@@ -369,13 +369,13 @@ class OpenScenarioParser(ScenarioParser):
                     p = 0.0
                     h = 0.0
                     if("Orientation" in vertex["Position"]["RelativeWorld"]):
-                        self.orientation = parsedVertex.positioningTags[vertex["Position"]["RelativeWorld"]["Orientation"]["@type"]]
-                        if "@r" in vertex["Position"]["RelativeWorld"]:
-                            r = vertex["Position"]["RelativeWorld"]["@r"]
-                        if "@p" in vertex["Position"]["RelativeWorld"]:
-                            p = vertex["Position"]["RelativeWorld"]["@p"]
-                        if "@h" in vertex["Position"]["RelativeWorld"]:
-                            h = vertex["Position"]["RelativeWorld"]["@h"]
+                        parsedVertex.orientation = parsedVertex.positioningTags[vertex["Position"]["RelativeWorld"]["Orientation"]["@type"]]
+                        if "@r" in vertex["Position"]["RelativeWorld"]["Orientation"]:
+                            r = vertex["Position"]["RelativeWorld"]["Orientation"]["@r"]
+                        if "@p" in vertex["Position"]["RelativeWorld"]["Orientation"]:
+                            p = vertex["Position"]["RelativeWorld"]["Orientation"]["@p"]
+                        if "@h" in vertex["Position"]["RelativeWorld"]["Orientation"]:
+                            h = vertex["Position"]["RelativeWorld"]["Orientation"]["@h"]
                     parsedVertex.pose = Pose(x=x,y=y,z=z,roll=r,pitch=p,yaw=h)
                 else:
                     print("[Error][ScenarioParser::_parseTrajectory] Unsupported Position:", vertex["Position"].keys())
