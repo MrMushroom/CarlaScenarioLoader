@@ -280,7 +280,7 @@ class CarlaActor(Actor):
                     print("[WARNING][CarlaActor::handleExecutionQueue] Implementation Missing for Trajectory action (lateral_purpose)!")
             else:
                 print("[WARNING][CarlaActor::handleExecutionQueue] Implementation Missing. Unable to handle new action type")
-                
+
             self._action = None
         return len(self._executionQueue)
 
@@ -391,7 +391,7 @@ class CarlaActor(Actor):
             try:
                 TimedEventHandler().syncBarrier()
             except threading.BrokenBarrierError:
-                pass
+                pass  # will happen at program end
 
             # a = datetime.datetime.now()
             if not self._wakeUp.wait(self._timeOut):
