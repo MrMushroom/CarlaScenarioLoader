@@ -18,7 +18,7 @@ tolerance = 0.1
 
 def constantStraightAhead(pose, timestamp, speed):
     queue = deque()
-    if speed >= 0:
+    if speed > 0:
         s = 0.1  # 100mm
         v = speed * 1000.0 / 3600
         dt = s / v
