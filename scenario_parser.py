@@ -235,7 +235,17 @@ class OpenScenarioParser(ScenarioParser):
                     actors = [actor for actor in self._actors if actor.getName() == sequence["Actors"]["Entity"][0]["@name"]]
                     entityEvent = EntityEvent(parsedAction, actors, parsedStartCondition)
 
-                    for actor in actors:
+                    if(parsedStartCondition.triggeringEntity == None):
+                        print("[Error][ScenarioParser::_processEntityEvents] no triggering entity. Unsupported Condition")
+                        return False
+
+                    # triggeringEntity.addEntityEvent(entityEvent)
+                    triggeringActors = [actor for actor in self._actors if actor.getName() == parsedStartCondition.triggeringEntity]
+                    if(len(actors) > 1):
+                        print("[Error][ScenarioParser::_processEntityEvents] Exactly 1 triggering entity supported, found", len(actors))
+                        return False
+
+                    for actor in triggeringActors:
                         actor.addEntityEvent(entityEvent)
 
             return True
@@ -314,6 +324,7 @@ class OpenScenarioParser(ScenarioParser):
         if "ByEntity" in condition:
             if(len(condition["ByEntity"]["TriggeringEntities"]["Entity"]) != 1):
                 print("[INFO][ScenarioParser::_processStartCondition] Use Exactly one triggering entity")
+                # When changing this, make sure triggering logic is adapted in event handling!
                 return False
             # ignore condition["ByEntity"]["TriggeringEntities"]["@rule"]
             startCondition.triggeringEntity = condition["ByEntity"]["TriggeringEntities"]["Entity"][0]["@name"]

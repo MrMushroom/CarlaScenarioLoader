@@ -120,9 +120,15 @@ class CarlaActor(Actor):
     def __init__(self, actorType, name, enableLogging=False, pose=None, speed=None, timestamp=None):
         Actor.__init__(self, actorType, name, enableLogging, pose, speed, timestamp)
         self.__carlaActor = None
+        self.__carlaCollisionSensor = None
         self.__inputController = None
+        self.__wakeUpOnScenarioEnd = None
 
-    def connectToSimulatorAndEvenHandler(self, ipAddress, port, timeout):
+        self.collisionEvent = None
+
+    def connectToSimulatorAndEvenHandler(self, ipAddress, port, timeout, wakeUpOnScenarioEnd):
+        self.__wakeUpOnScenarioEnd = wakeUpOnScenarioEnd
+        
         try:
             prctl.set_name("sim" + self._name)
             self._client = carla.Client(ipAddress, port)
@@ -141,6 +147,15 @@ class CarlaActor(Actor):
             self.__carlaActor = self._client.get_world().spawn_actor(blueprint, transform)
             if self.__carlaActor is None:
                 raise RuntimeError("Couldn't spawn actor")
+
+            # add sensors
+            try:
+                if(self._name == "Ego"):
+                    bp = self._client.get_world().get_blueprint_library().find('sensor.other.collision')
+                    self.__carlaCollisionSensor = self._client.get_world().spawn_actor(bp, carla.Transform(), attach_to=self.__carlaActor)
+                    self.__carlaCollisionSensor.listen(lambda event: self.onCollision(event))
+            except Exception as e:
+                print(e)
 
             # wait for vehicle spawn
             if(transform.location.x != 0 or transform.location.y != 0 or transform.location.z != 0 or
@@ -163,9 +178,16 @@ class CarlaActor(Actor):
         try:
             print("# destroying actor", self._name)
             self._isConnected = False
+
             TimedEventHandler().unsubscribe(self._name)
+
+            if(self.__carlaCollisionSensor != None):
+                self.__carlaCollisionSensor.destroy()
+                self.__carlaCollisionSensor = None
+
             self.__carlaActor.destroy()
             self.__carlaActor = None
+
             return True
         except:
             print("[Error][CarlaActor::disconnectFromSimulatorAndEventHandler] Unexpected error:", sys.exc_info())
@@ -242,7 +264,6 @@ class CarlaActor(Actor):
 
     def handleExecutionQueue(self):
         # check if queue full
-
         if len(self._executionQueue) > 1:
             if self._executionQueue[-1].timestamp >= self._currentTimeStamp:
                 return len(self._executionQueue)  # full and useable
@@ -338,6 +359,11 @@ class CarlaActor(Actor):
 
         self.__carlaActor.set_transform(transform)
 
+    def onCollision(self, event):
+        if(self.__wakeUpOnScenarioEnd != None):
+            self.collisionEvent = event
+            self.__wakeUpOnScenarioEnd.set()
+
     def update(self, event):
         if event is None:
             pass  # just a normal tick
@@ -371,6 +397,7 @@ class CarlaActor(Actor):
                 self._previousTimeStamp = TimedEventHandler().getPreviousSimTimeStamp()
                 # print(self._name, self._currentTimeStamp.getFloat(), self._currentPose, self._currentSpeed)
 
+                # handleEvents()
                 self.handleEvents()
 
                 # handle data, send to carla - trigger magic stuff
@@ -397,6 +424,7 @@ class CarlaActor(Actor):
             if not self._wakeUp.wait(self._timeOut):
                 print("[Error][CarlaActor::_actorThread] WakeUp Timeout")
                 self._isRunning = False
+            # TODO possibility unbounded
 
             self._wakeUp.clear()
             # b = datetime.datetime.now()
