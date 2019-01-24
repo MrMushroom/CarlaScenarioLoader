@@ -12,11 +12,19 @@ import sys
 
 from test_control import TestControl
 
+CMDLINEPARAM_PROGNAME = 0
+CMDLINEPARAM_PROGMODE = 1
+CMDLINEPARAM_SIMTYPE = 1
+CMDLINEPARAM_SIMIP = 2
+CMDLINEPARAM_SIMPORT = 3
+CMDLINEPARAM_SIMTIMEOUT = 4
+CMDLINEPARAM_SCENARIOFORMAT = 5
+CMDLINEPARAM_SCENARIOFILES_START = 6
 
 def main():
 
     if len(sys.argv) == 2:
-        if sys.argv[1] == "help":
+        if sys.argv[CMDLINEPARAM_PROGMODE] == "help":
             print(inspect.getfile(inspect.currentframe()) + " help - get this message")
             print(inspect.getfile(inspect.currentframe()) +
                   " <Carla> <OpenScenario> <OpenScenario-file> - for standard execution")
@@ -25,29 +33,66 @@ def main():
             print("[Error] Wrong command line parameters, try: \"" +
                   inspect.getfile(inspect.currentframe()) + " help\"")
             exit()
-    # TODO check later for > 5, for more scenarios ;)
-    elif len(sys.argv) == 5:
-            # check for Scenario-file
-        if os.path.isfile(sys.argv[4]):
+    # TODO implement multi scenario
+    elif len(sys.argv) > CMDLINEPARAM_SCENARIOFILES_START:
+        # load params
+        simType = sys.argv[CMDLINEPARAM_SIMTYPE]
+        simIP = sys.argv[CMDLINEPARAM_SIMIP]
+        simPort = int(sys.argv[CMDLINEPARAM_SIMPORT])
+        simTimeout = float(sys.argv[CMDLINEPARAM_SIMTIMEOUT])
+        scenarioFormat = sys.argv[CMDLINEPARAM_SCENARIOFORMAT]
+        scenarioFiles = getFileNames()
+
+        if len(scenarioFiles) == 0:
+            print("[Error] parameter", CMDLINEPARAM_SCENARIOFILES_START, "-", len(sys.argv), "have to contain valid paths to files")
+            exit()
+
+        for scenarioFile in scenarioFiles:
+            print("## Loading Scenario:", scenarioFile)
+
             # create TestControl class
-            testControl = TestControl(sys.argv[1], sys.argv[2], 2000, 2.0, sys.argv[3])
-            # try to load scenario-config
-            if not testControl.setupTestWithConfig(sys.argv[4]):
-                print("[Error] TestControl-Setup failed")
-                exit()
+            testControl = TestControl(simType, simIP, simPort, simTimeout, scenarioFormat)
+
+            # try loading scenario-config
+            if not testControl.setupTestWithConfig(scenarioFile):
+                print("[Error] TestControl-Setup failed for", scenarioFile)
+                # TODO save log?
+                continue
+
             testControl.executeTest()
             # Simulation is built up
             # Simulation is executed
             testControl.cleanupTest()
-            # Simulation environment is stopped
-            print(" --- The End ---")
 
-        else:
-            print("[Error] third parameter has to be a valid filepath")
-            exit()
+            if testControl.isSkipCurrentTest:
+                print("## Scenario:", scenarioFile, "skipped.")
+                continue
+            elif testControl.isAbortAllFurtherTests:
+                print("## Scenario:", scenarioFile, "and all further scenarios aborted")
+                break
+
+            print("##Finished Scenario:", scenarioFile)
+
+        print(" --- The End ---")
+    
     else:
         print("[Error] try \"" + inspect.getfile(inspect.currentframe()) + " help\"")
 
+def getFileNames():
+    scenarioFiles = []
+    
+    for i in range(CMDLINEPARAM_SCENARIOFILES_START, len(sys.argv)):
+        if os.path.isfile(sys.argv[i]):
+            scenarioFiles.append(sys.argv[i])
+        elif os.path.isdir(sys.argv[i]):
+            for root, subdirs, files in os.walk(sys.argv[i]):
+                for filename in files:
+                    file_path = os.path.join(root, filename)
+                    scenarioFiles.append(os.path.join(root, filename))
+        else:
+            print("[Info][main::getFileNames] Hmm wierd ... what did we find?")
+
+    return scenarioFiles
 
 if __name__ == '__main__':
     prctl.set_name("init")

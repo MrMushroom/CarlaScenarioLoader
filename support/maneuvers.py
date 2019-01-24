@@ -56,7 +56,7 @@ def constantStraightAhead(pose, timestamp, speed):
 def trajectory(vertices, domain, pose, timestamp, speed):
     queue = deque()
     if domain == "distance":
-        if speed >= 0:
+        if speed > 0:
             s = 0.1  # 100mm
             v = speed * 1000.0 / 3600
             dt = s / v

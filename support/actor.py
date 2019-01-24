@@ -323,6 +323,11 @@ class CarlaActor(Actor):
                                                      cur_control["reverse"])
         self.__carlaActor.apply_control(carla_vehicle_control)
 
+        # check if end position reached
+        print(self._desiredSpeed, self._events)
+        if self._events is None and self._desiredSpeed == 0:
+            self.__wakeUpOnScenarioEnd.set()
+
     def handleNonEgo(self):
         # do magic pose stuff
         self.handleExecutionQueue()

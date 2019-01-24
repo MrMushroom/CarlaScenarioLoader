@@ -32,6 +32,9 @@ class TestControl():
         self.__simulatorTimeout = simulatorTimeout
         self.__wakeUpOnScenarioEnd = threading.Event()
 
+        self.isSkipCurrentTest = False
+        self.isAbortAllFurtherTests = False
+
         if scenarioFileType == "OpenScenario":
             self.__scenarioParser = OpenScenarioParser()
         else:
@@ -109,8 +112,18 @@ class TestControl():
             waitForKeyboardThread.start()
             self.__wakeUpOnScenarioEnd.wait()
             endTime = datetime.datetime.now()
-            print("# test stopped at", endTime, "runtime was", endTime-startTime)
             waitForKeyboardThread.join()
+            
+            isTestWithoutCollision = True
+            for actor in self.__actors:
+                if actor.collisionEvent is not None:
+                    print(actor.getName(), "crashed with", actor.collisionEvent)
+                    isTestWithoutCollision = False
+
+            if isTestWithoutCollision:
+                print("# SUCCESS at", endTime, "runtime was", endTime-startTime)
+            else:
+                print("# FAILED at", endTime, "runtime was", endTime-startTime)
         else:
             print("# test failed starting")
 
@@ -149,19 +162,25 @@ class TestControl():
         try:
             tty.setcbreak(sys.stdin.fileno())
 
-            i = 0
             while True:
                 if self.__wakeUpOnScenarioEnd.is_set():
                     break
                 
                 if select.select([sys.stdin], [], [], 0) == ([sys.stdin], [], []):
                     c = sys.stdin.read(1)
-                    if c == 'q' or c == '\x1b':     # x1b is ESC
+                    if c == 's':
                         if not self.__wakeUpOnScenarioEnd.is_set():
                             self.__wakeUpOnScenarioEnd.set()
+                        self.isSkipCurrentTest = True
+                        break
+                    elif c == 'q' or c == '\x1b':     # x1b is ESC
+                        if not self.__wakeUpOnScenarioEnd.is_set():
+                            self.__wakeUpOnScenarioEnd.set()
+                        self.isAbortAllFurtherTests = True
                         break
                     else:
-                        print("# press <q> or <ESC> to stop")
+                        print("# press <s> to skip test")
+                        print("# press <q> or <ESC> to abort all tests")
                 time.sleep(0.1)
 
         finally:

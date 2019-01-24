@@ -1,7 +1,7 @@
 source ~/catkin_ws/devel/setup.sh
 source ~/temp-ros-geometry/devel/setup.sh
 
-python3 scenario_loader.py Carla 172.20.1.70 OpenScenario scenarios/001_straight_ahead_attack_from_right_at_crossing.xosc
+python3 scenario_loader.py Carla 172.20.1.70 2000 2.0 OpenScenario scenarios/database/
 
 # # get tf for python3
 # mkdir catkin_ws

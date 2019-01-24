@@ -135,6 +135,45 @@
                     </Event>
                 </Maneuver>
             </Sequence>
+            <Sequence name="End" numberOfExecutions="1">
+                <Actors>
+                    <Entity name="Ego"/>
+                </Actors>
+                <Maneuver name="StopAtEnd">
+                    <Event name="PathEndReached" priority="overwrite">
+                        <Action name="Stop">
+                            <Private>
+                                <Longitudinal>
+                                    <Speed>
+                                        <Dynamics shape="step" rate="0.0"/>
+                                        <Target>
+                                            <Absolute value="0.0"/>
+                                        </Target>
+                                    </Speed>
+                                </Longitudinal>
+                            </Private>
+                        </Action>
+                        <StartConditions>
+                            <ConditionGroup>
+                                <Condition name="EndOfPath" delay="0" edge="rising">
+                                    <ByEntity>
+                                        <TriggeringEntities rule="any">
+                                            <Entity name="Ego"/>
+                                        </TriggeringEntities>
+                                        <EntityCondition>
+                                            <ReachPosition tolerance="1.0">
+												<Position>
+													<World x="19.54" y="-11.03" z="0.0" h="-3.1415926" p="0" r="0"/>
+												</Position>
+											</ReachPosition>
+                                        </EntityCondition>
+                                    </ByEntity>
+                                </Condition>
+                            </ConditionGroup>
+                        </StartConditions>
+                    </Event>
+                </Maneuver>
+            </Sequence>
             <Conditions>
                 <Start>
                     <ConditionGroup>
