@@ -17,13 +17,12 @@ echo -e "${LIGHT_GREEN}[INFO] Install ScenarioLoader dependencies - Done${NC}"
 echo -e "${GREEN}[INFO] Install the build tools and dependencies${NC}"
 sudo add-apt-repository ppa:ubuntu-toolchain-r/test
 sudo apt-get update
-sudo apt-get install build-essential clang-5.0 lld-5.0 g++-7 ninja-build python python-pip python-dev tzdata sed curl wget unzip autoconf libtool
-sudo apt-get install build-essential clang-5.0 lld-5.0 g++-7 cmake ninja-build python python-pip python-dev python3-dev python3-pip libtiff5-dev libjpeg-dev tzdata sed curl wget unzip autoconf libtool
+sudo apt-get install build-essential clang-6.0 lld-6.0 g++-7 cmake ninja-build python python-pip python-dev python3-dev python3-pip libtiff5-dev libjpeg-dev tzdata sed curl wget unzip autoconf libtool
 echo -e "${LIGHT_GREEN}[INFO] Install the build tools and dependencies - Done${NC}"
 
 echo -e "${GREEN}[INFO] Install clang and libc++${NC}"
-sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/lib/llvm-5.0/bin/clang++ 101
-sudo update-alternatives --install /usr/bin/clang clang /usr/lib/llvm-5.0/bin/clang 101
+sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/lib/llvm-6.0/bin/clang++ 102
+sudo update-alternatives --install /usr/bin/clang clang /usr/lib/llvm-6.0/bin/clang 102
 echo -e "${LIGHT_GREEN}[INFO] Install clang and libc++ - Done${NC}"
 
 echo -e "${GREEN}[INFO] Install cmake 3.12.4${NC}"
@@ -47,24 +46,26 @@ else
 fi
 
 echo -e "${GREEN}[INFO] Install Unreal Engine${NC}"
-if [ ! -d ~/UnrealEngine_4.19 ]; then
-  git clone --depth=1 -b 4.19 https://github.com/EpicGames/UnrealEngine.git ~/UnrealEngine_4.19
-  cd ~/UnrealEngine_4.19
+if [ ! -d ~/UnrealEngine_4.21 ]; then
+  cd ~/
+  git clone --depth=1 -b 4.21 https://github.com/EpicGames/UnrealEngine.git ~/UnrealEngine_4.21
+  cd ~/UnrealEngine_4.21
   ./Setup.sh && ./GenerateProjectFiles.sh && make
   echo -e "${LIGHT_GREEN}[INFO] Install Unreal Engine - Done${NC}"
 else
-  echo -e "${LIGHT_GREEN}[INFO] ~/UnrealEngine_4.19 already exists. Delete for reinstall${NC}"
+  echo -e "${LIGHT_GREEN}[INFO] ~/UnrealEngine_4.21 already exists. Delete for reinstall${NC}"
 fi
 
-echo -e "${GREEN}[INFO] Install carla 0.9.2${NC}"
+echo -e "${GREEN}[INFO] Install carla 0.9.3${NC}"
 if [ ! -d ~/carla ]; then
+  cd ~/
   git clone https://github.com/carla-simulator/carla.git
   cd ~/carla
-  git checkout 0.9.2
+  git checkout 0.9.3
   ./Update.sh
-  export UE4_ROOT=~/UnrealEngine_4.19
+  export UE4_ROOT=~/UnrealEngine_4.21
   make CarlaUE4Editor
-  echo -e "${LIGHT_GREEN}[INFO] Install carla 0.9.2 - Done${NC}"
+  echo -e "${LIGHT_GREEN}[INFO] Install carla 0.9.3 - Done${NC}"
 else
   echo -e "${LIGHT_GREEN}[INFO] ~/carla already exists. Delete for reinstall${NC}"
 fi
@@ -80,7 +81,7 @@ then
   pip2 install --user setuptools nose2
   pip3 install --user setuptools nose2
   cd ~/carla
-  export UE4_ROOT=~/UnrealEngine_4.19
+  export UE4_ROOT=~/UnrealEngine_4.21
   make PythonAPI
   cd ~/carla/PythonAPI
   sudo python3 setup.py install
