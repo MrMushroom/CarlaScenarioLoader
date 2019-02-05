@@ -71,7 +71,7 @@
                 </Action>
                 <Action>
                     <Position>
-                        <World x="219.0" y="-5.3" z="0.5" h="-3.1258846903218" p="0" r="0"/>
+                        <World x="219.0" y="-5.3" z="0.0" h="-3.1258846903218" p="0" r="0"/>
                     </Position>
                 </Action>
             </Private>
@@ -88,7 +88,7 @@
                 </Action>
                 <Action>
                     <Position>
-                        <World x="219.0" y="-2.3" z="0.5" h="-3.1258846903218" p="0" r="0"/>
+                        <World x="219.0" y="-2.3" z="0.0" h="-3.1258846903218" p="0" r="0"/>
                     </Position>
                 </Action>
             </Private>
@@ -108,7 +108,7 @@
                                     <Speed>
                                         <Dynamics shape="step" rate="0.0"/>
                                         <Target>
-                                            <Absolute value="50.0"/>
+                                            <Absolute value="5.0"/>
                                         </Target>
                                     </Speed>
                                 </Longitudinal>
