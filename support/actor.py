@@ -324,7 +324,6 @@ class CarlaActor(Actor):
         self.__carlaActor.apply_control(carla_vehicle_control)
 
         # check if end position reached
-        print(self._desiredSpeed, self._events)
         if self._events is None and self._desiredSpeed == 0:
             self.__wakeUpOnScenarioEnd.set()
 
@@ -351,6 +350,13 @@ class CarlaActor(Actor):
         else:  # (prevAction is not None and nextAction is not None)
             self._desiredPose = maneuvers.interpolateActions(prevAction, nextAction, self._currentTimeStamp)
 
+        print(self._desiredSpeed, self._currentSpeed)
+        if nextAction is not None:
+            if nextAction.longitudinal_speed is not None:
+                self._desiredSpeed = nextAction.longitudinal_speed
+                # TODO refactor speed setting to allow shapes!
+                print("TODO refactor speed setting to allow shapes!")
+
         # send data to Carla
         transform = carla.Transform(carla.Location(self._desiredPose.getPosition()[0],
                                                    self._desiredPose.getPosition()[1],
@@ -359,10 +365,21 @@ class CarlaActor(Actor):
                                                    math.degrees(self._desiredPose.getOrientation()[2]),
                                                    math.degrees(self._desiredPose.getOrientation()[0])))
 
+        pitch = self._desiredPose.getOrientation()[1]
+        yaw = self._desiredPose.getOrientation()[2]
+        velocity = self.__carlaActor.get_velocity()
+        print("a", velocity)
+        print("u", self.__carlaActor.get_location())
+        velocity.x = self._desiredSpeed * math.cos(yaw) * math.cos(pitch)
+        velocity.y = self._desiredSpeed * math.sin(yaw) * math.cos(pitch)
+        #velocity.z = self._desiredSpeed * math.sin(pitch) # dont set, let the vehicle drop
+        print("b", velocity)
+
         # if self._name == "Target1":
         #     print(self._name, TimedEventHandler().getSimTimeDiff(),  transform)
 
         self.__carlaActor.set_transform(transform)
+        #self.__carlaActor.set_velocity(velocity)
 
     def onCollision(self, event):
         if(self.__wakeUpOnScenarioEnd != None):
