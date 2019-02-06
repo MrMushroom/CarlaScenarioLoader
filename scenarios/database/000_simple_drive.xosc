@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <OpenSCENARIO>
     
-<FileHeader revMajor="0" revMinor="9" date="2017-07-27T10:00:00" description="Sample Scenario - Lane Changer" author="Andreas Biehn"/>
+<FileHeader revMajor="0" revMinor="1" date="2019-02-06T10:00:00" description="Sample Scenario - Simple Drive" author="Christoph Pilz"/>
 
 <ParameterDeclaration/>
 
@@ -58,7 +58,7 @@
                         <Speed>
                             <Dynamics shape="step" rate="0"/>
                             <Target>
-                                <Absolute value="36.1"/>
+                                <Absolute value="50.0"/>
                             </Target>
                         </Speed>
                     </Longitudinal>
@@ -73,19 +73,19 @@
     </Init>
     <Story name="MyStory" owner="Ego">
         <Act name="MyAct">
-            <Sequence name="Sequence1" numberOfExecutions="1">
+            <Sequence name="End" numberOfExecutions="1">
                 <Actors>
                     <Entity name="Ego"/>
                 </Actors>
-                <Maneuver name="Maneuver1">
-                    <Event name="Event1" priority="overwrite">
-                        <Action name="Action1.1">
+                <Maneuver name="StopAtEnd">
+                    <Event name="PathEndReached" priority="overwrite">
+                        <Action name="Stop">
                             <Private>
                                 <Longitudinal>
                                     <Speed>
                                         <Dynamics shape="step" rate="0.0"/>
                                         <Target>
-                                            <Absolute value="5.0"/>
+                                            <Absolute value="0.0"/>
                                         </Target>
                                     </Speed>
                                 </Longitudinal>
@@ -93,15 +93,15 @@
                         </Action>
                         <StartConditions>
                             <ConditionGroup>
-                                <Condition name="StartCondition1" delay="0" edge="rising">
+                                <Condition name="EndOfPath" delay="0" edge="rising">
                                     <ByEntity>
                                         <TriggeringEntities rule="any">
-                                            <Entity name="Target1"/>
+                                            <Entity name="Ego"/>
                                         </TriggeringEntities>
                                         <EntityCondition>
-                                            <ReachPosition tolerance="1.0">
+                                            <ReachPosition tolerance="5.0">
 												<Position>
-													<World x="110.5" y="129.5" z="38.5" h="3.1415926" p="0" r="0"/>
+													<World x="24.0" y="-8.0" z="0.0" h="-3.1415926" p="0" r="0"/>
 												</Position>
 											</ReachPosition>
                                         </EntityCondition>
