@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <OpenSCENARIO>
     
-<FileHeader revMajor="0" revMinor="9" date="2017-07-27T10:00:00" description="Sample Scenario - Lane Changer" author="Andreas Biehn"/>
+<FileHeader revMajor="0" revMinor="1" date="2019-02-06T16:00:00" description="Sample Scenario - Car driving ahead and slowing down" author="Christoph Pilz"/>
 
 <ParameterDeclaration/>
 
@@ -88,7 +88,7 @@
                 </Action>
                 <Action>
                     <Position>
-                        <World x="219.0" y="-2.3" z="0.0" h="-3.1258846903218" p="0" r="0"/>
+                        <World x="149.39103516" y="-16.974143066" z="1.0" h="1.58818823608" p="0" r="0"/>
                     </Position>
                 </Action>
             </Private>
@@ -122,9 +122,9 @@
                                             <Entity name="Ego"/>
                                         </TriggeringEntities>
                                         <EntityCondition>
-                                            <ReachPosition tolerance="0.5">
+                                            <ReachPosition tolerance="1.0">
 												<Position>
-													<World x="210.0" y="-5.3" z="0.1" h="-3.1258846903218" p="0" r="0"/>
+													<World x="167.0" y="-6.0" z="0.1" h="-3.1258846903218" p="0" r="0"/>
 												</Position>
 											</ReachPosition>
                                         </EntityCondition>
@@ -161,9 +161,9 @@
                                             <Entity name="Ego"/>
                                         </TriggeringEntities>
                                         <EntityCondition>
-                                            <ReachPosition tolerance="1.0">
+                                            <ReachPosition tolerance="5.0">
 												<Position>
-													<World x="19.54" y="-11.03" z="0.0" h="-3.1415926" p="0" r="0"/>
+													<World x="24.0" y="-8.0" z="0.0" h="-3.1415926" p="0" r="0"/>
 												</Position>
 											</ReachPosition>
                                         </EntityCondition>

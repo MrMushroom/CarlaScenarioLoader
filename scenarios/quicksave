@@ -1,0 +1,22 @@
+
+    <Object name="Target1">
+        <CatalogReference catalogName="VechicleCatalog" entryName="AudiA4_red_147kW"/>
+        <Controller>
+            <CatalogReference catalogName="DriverCatalog" entryName="DefaultDriver"/>
+        </Controller>
+    </Object>
+    <Object name="Target2">
+        <CatalogReference catalogName="VechicleCatalog" entryName="AudiA3_white_147kW"/>
+        <Controller>
+            <CatalogReference catalogName="DriverCatalog" entryName="DefaultDriver"/>
+        </Controller>
+    </Object>
+    <Object name="Target3">
+        <CatalogReference catalogName="VechicleCatalog" entryName="AudiA4_red_147kW"/>
+        <Controller>
+            <CatalogReference catalogName="DriverCatalog" entryName="DefaultDriver"/>
+        </Controller>
+    </Object>
+
+
+                        <World x="271.5" y="133.5" z="38.5" h="3.1415926" p="0" r="0"/>

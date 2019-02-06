@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <OpenSCENARIO>
     
-<FileHeader revMajor="0" revMinor="9" date="2017-07-27T10:00:00" description="Sample Scenario - Lane Changer" author="Andreas Biehn"/>
+<FileHeader revMajor="0" revMinor="1" date="2019-02-06T15:00:00" description="Sample Scenario - Straight ahead with side crash" author="Christoph Pilz"/>
 
 <ParameterDeclaration/>
 
@@ -47,6 +47,12 @@
             <CatalogReference catalogName="DriverCatalog" entryName="HastyDriver"/>
         </Controller>
     </Object>
+    <Object name="Target1">
+        <CatalogReference catalogName="VechicleCatalog" entryName="AudiA4_red_147kW"/>
+        <Controller>
+            <CatalogReference catalogName="DriverCatalog" entryName="DefaultDriver"/>
+        </Controller>
+    </Object>
 </Entities>
 
 <Storyboard>
@@ -69,13 +75,30 @@
                     </Position>
                 </Action>
             </Private>
+            <Private object="Target1">
+                <Action>
+                    <Longitudinal>
+                        <Speed>
+                            <Dynamics shape="step" rate="0"/>
+                            <Target>
+                                <Absolute value="0.0"/>
+                            </Target>
+                        </Speed>
+                    </Longitudinal>
+                </Action>
+                <Action>
+                    <Position>
+                        <World x="149.39103516" y="-16.974143066" z="1.0" h="1.58818823608" p="0" r="0"/>
+                    </Position>
+                </Action>
+            </Private>
         </Actions>
     </Init>
-    <Story name="MyStory" owner="Ego">
+    <Story name="MyStory" owner="Target1">
         <Act name="MyAct">
             <Sequence name="Sequence1" numberOfExecutions="1">
                 <Actors>
-                    <Entity name="Ego"/>
+                    <Entity name="Target1"/>
                 </Actors>
                 <Maneuver name="Maneuver1">
                     <Event name="Event1" priority="overwrite">
@@ -96,12 +119,51 @@
                                 <Condition name="StartCondition1" delay="0" edge="rising">
                                     <ByEntity>
                                         <TriggeringEntities rule="any">
-                                            <Entity name="Target1"/>
+                                            <Entity name="Ego"/>
                                         </TriggeringEntities>
                                         <EntityCondition>
                                             <ReachPosition tolerance="1.0">
 												<Position>
-													<World x="110.5" y="129.5" z="38.5" h="3.1415926" p="0" r="0"/>
+													<World x="167.0" y="-6.0" z="0.1" h="-3.1258846903218" p="0" r="0"/>
+												</Position>
+											</ReachPosition>
+                                        </EntityCondition>
+                                    </ByEntity>
+                                </Condition>
+                            </ConditionGroup>
+                        </StartConditions>
+                    </Event>
+                </Maneuver>
+            </Sequence>
+            <Sequence name="End" numberOfExecutions="1">
+                <Actors>
+                    <Entity name="Ego"/>
+                </Actors>
+                <Maneuver name="StopAtEnd">
+                    <Event name="PathEndReached" priority="overwrite">
+                        <Action name="Stop">
+                            <Private>
+                                <Longitudinal>
+                                    <Speed>
+                                        <Dynamics shape="step" rate="0.0"/>
+                                        <Target>
+                                            <Absolute value="0.0"/>
+                                        </Target>
+                                    </Speed>
+                                </Longitudinal>
+                            </Private>
+                        </Action>
+                        <StartConditions>
+                            <ConditionGroup>
+                                <Condition name="EndOfPath" delay="0" edge="rising">
+                                    <ByEntity>
+                                        <TriggeringEntities rule="any">
+                                            <Entity name="Ego"/>
+                                        </TriggeringEntities>
+                                        <EntityCondition>
+                                            <ReachPosition tolerance="5.0">
+												<Position>
+													<World x="24.0" y="-8.0" z="0.0" h="-3.1415926" p="0" r="0"/>
 												</Position>
 											</ReachPosition>
                                         </EntityCondition>
