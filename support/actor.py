@@ -315,6 +315,22 @@ class CarlaActor(Actor):
             self.__inputController = InputController()
         cur_control = self.__inputController.get_cur_control()
 
+        # check action
+        if self._action is None:
+            pass
+        else:
+            # TODO build a better decision tree for the action
+            if(len(self._action.tags) == 1 and self._action.semanticTags["longitudinal"] in self._action.tags):
+                # set speed
+                if(self._action.longitudinal_dynamics_shape == "step"):
+                    self._desiredSpeed = self._action.longitudinal_speed
+                else:
+                    print("[WARNING][CarlaActor::handleEgo] Implementation Missing for longitudinal action!")
+            else:
+                print("[WARNING][CarlaActor::handleEgo] Implementation Missing. Unable to handle new action type")
+
+            self._action = None
+
         # send data to carla
         carla_vehicle_control = carla.VehicleControl(cur_control["throttle"],
                                                      cur_control["steer"],
@@ -324,7 +340,7 @@ class CarlaActor(Actor):
         self.__carlaActor.apply_control(carla_vehicle_control)
 
         # check if end position reached
-        if self._events is None and self._desiredSpeed == 0:
+        if len(self._events) == 0 and self._desiredSpeed == 0.0 and self._currentSpeed == 0.0:
             self.__wakeUpOnScenarioEnd.set()
 
     def handleNonEgo(self):
