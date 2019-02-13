@@ -84,21 +84,128 @@ def killMenu(actors):
         print("Killing aborted ... for now")
 
 def poseMenu(actors):
-    actorID = input("Provide ActorID to print pose (0 to abort): ")
-    try:
-        actorID = int(actorID)
-    except:
-        actorID = 0
-    
-    if(actorID != 0):
+    while(True):
+        print("--- Pose Menu ---")
+        print("0 ... exit to main menu")
+        print("1 ... get pose from actor")
+        print("2 ... set pose for actor (free)")
+        print("3 ... set pose for actor (defaults)")
+
+        selection = input("Selection: ")
+        print("--- --- ---")
+
         try:
-            for actor in actors:
-                if(actor.id == actorID):
-                    print(actor.get_transform())
-        except Exception as e:
-            print("Error during pose retrieval:", e)
-    else:
-        print("Aborted pose menu")
+            s = int(selection)
+        except:
+            s = -1
+
+        if s == 0:
+            return
+        elif s == 1:
+            actorID = input("Provide ActorID to print pose (0 to abort): ")
+            try:
+                actorID = int(actorID)
+            except:
+                actorID = 0
+            
+            if(actorID != 0):
+                try:
+                    for actor in actors:
+                        if(actor.id == actorID):
+                            print(actor.get_transform())
+                except Exception as e:
+                    print("Error during pose retrieval:", e)
+            else:
+                print("Aborted pose retrieval")
+        elif s == 2:
+            print("Provide actor ID and pose, then confirm settings")
+            actorID = input("Provide ActorID: ")
+            x = input("x: ")
+            y = input("y: ")
+            z = input("z: ")
+            roll = input("roll(°): ")
+            pitch = input("pitch(°): ")
+            yaw = input("yaw(°): ")
+
+            try:
+                actorID = int(actorID)
+                x = int(x)
+                y = int(y)
+                z = int(z)
+                roll = int(roll)
+                pitch = int(pitch)
+                yaw = int(yaw)
+            except Exception as e:
+                print("Input error:", e)
+                continue
+
+            try:
+                for actor in actors:
+                    if(actor.id == actorID):
+                        transform = actor.get_transform()
+                        print("old pose:", transform)
+                        transform.location.x = x
+                        transform.location.y = y
+                        transform.location.z = z
+                        transform.rotation.roll = roll
+                        transform.rotation.pitch = pitch
+                        transform.rotation.yaw = yaw
+                        print("new pose:", transform)
+                        
+                        decision = input("confirm pose change (y/n)")
+                        if(decision == "y"):
+                            actor.set_transform(transform)
+                    else:
+                        print("actor ID", actorID, "not found")
+                        continue
+            except Exception as e:
+                print("Error during pose retrieval/setting:", e)
+        elif s == 3:
+            actorID = input("Provide ActorID: ")
+            actorForPose = None
+            try:
+                actorID = int(actorID)
+                for actor in actors:
+                    if(actor.id == actorID):
+                        actorForPose = actor
+                if(actorForPose == None):
+                    print("Couldn't find actor")
+                    continue
+            except Exception as e:
+                print("Input error:", e)
+                continue
+
+            transform1 = carla.Transform()
+            transform1.location.x = 80.0
+            transform1.location.y = 0.0
+            transform1.location.z = 60.0
+            transform1.rotation.roll = -88.0
+            transform1.rotation.pitch = -88.0
+            transform1.rotation.yaw = 0.0
+            
+            print("Select Transform:")
+            print("0 ... abort")
+            print("1 ...", transform1)
+            
+
+            option = input("Select Pose:")
+
+            try:
+                o = int(option)
+            except:
+                o = -1
+
+            if o == 1:
+                try:
+                    actor.set_transform(transform1)
+                except Exception as e:
+                    print("Error during pose setting:", e)
+            else:
+                print("Aborted")
+            
+        else:
+            print("")
+            continue
 
 
 if __name__ == '__main__':
