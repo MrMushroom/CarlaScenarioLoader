@@ -15,6 +15,9 @@ import sys
 import threading
 import time
 
+#workaround ros dependencies
+import tf
+
 from collections import deque
 
 from . import maneuvers
@@ -332,12 +335,15 @@ class CarlaActor(Actor):
             self._action = None
 
         # send data to carla
-        carla_vehicle_control = carla.VehicleControl(cur_control["throttle"],
-                                                     cur_control["steer"],
-                                                     cur_control["brake"],
-                                                     cur_control["hand_brake"],
-                                                     cur_control["reverse"])
-        self.__carlaActor.apply_control(carla_vehicle_control)
+        # TODO fix PID controller and reimplement vehicle control
+        # carla_vehicle_control = carla.VehicleControl(cur_control["throttle"],
+        #                                              cur_control["steer"],
+        #                                              cur_control["brake"],
+        #                                              cur_control["hand_brake"],
+        #                                              cur_control["reverse"])
+        # self.__carlaActor.apply_control(carla_vehicle_control)
+
+        (egoPose, egoSpeed) = self._egoControlPathWorkaround()
 
         # check if end position reached
         if len(self._events) == 0 and self._desiredSpeed == 0.0 and self._currentSpeed == 0.0:
@@ -466,3 +472,135 @@ class CarlaActor(Actor):
             # print(c.microseconds)
 
         print (self._name, "stopped acting")
+
+    def _egoControlPathWorkaround(self):
+        # This is just a backup workaround for PID Controller function
+        local_path = InputController().get_local_path()
+
+        egoPose = None
+        egoSpeed = None
+
+        if len(local_path.path_points) == 0:
+            print("[INFO][CarlaActor::_egoControlPathWorkaround] local path empty, standing still")
+            return (None, None)
+
+        minDistance = math.sqrt(math.pow(self._currentPose.getPosition()[0] - local_path.path_points[0].pose.pose.position.x, 2) +
+                                math.pow(self._currentPose.getPosition()[1] - local_path.path_points[0].pose.pose.position.y, 2) +
+                                math.pow(self._currentPose.getPosition()[2] - local_path.path_points[0].pose.pose.position.z, 2))
+        minPathPoint = local_path.path_points[0]
+        
+        secondMinDistance = None
+        secondMinPathPoint = None
+
+        for path_point in local_path.path_points:
+            distance = math.sqrt(math.pow(self._currentPose.getPosition()[0] - path_point.pose.pose.position.x, 2) +
+                                 math.pow(self._currentPose.getPosition()[1] - path_point.pose.pose.position.y, 2) +
+                                 math.pow(self._currentPose.getPosition()[2] - path_point.pose.pose.position.z, 2))
+            pathPoint = path_point
+
+            if distance < minDistance:
+                secondMinDistance = minDistance
+                secondMinPathPoint = minPathPoint
+                minDistance = distance
+                minPathPoint = pathPoint
+            elif distance > minDistance:
+                if secondMinDistance is None:
+                    # beside p0
+                    secondMinDistance = distance
+                    secondMinPathPoint = pathPoint
+                    break
+                elif distance > secondMinDistance:
+                    # between second and first
+                    break
+                elif distance <= secondMinDistance:
+                    # between first and new, or directly at the half. Take new point
+                    secondMinDistance = distance
+                    secondMinPathPoint = pathPoint
+                    break
+            else:
+                # distance = minDistance, hapens in first loop
+                pass
+
+        distance = math.sqrt(math.pow(minPathPoint.pose.pose.position.x - secondMinPathPoint.pose.pose.position.x, 2) +
+                             math.pow(minPathPoint.pose.pose.position.y - secondMinPathPoint.pose.pose.position.y, 2) +
+                             math.pow(minPathPoint.pose.pose.position.z - secondMinPathPoint.pose.pose.position.z, 2))
+
+        if distance < minDistance:
+            # the car is before the line or the car is beyond the line or its an error
+            if (minPathPoint.pose.pose.position.x == local_path.path_points[0].pose.pose.position.x and
+                minPathPoint.pose.pose.position.y == local_path.path_points[0].pose.pose.position.y and
+                minPathPoint.pose.pose.position.z == local_path.path_points[0].pose.pose.position.z and
+                secondMinPathPoint.pose.pose.position.x == local_path.path_points[1].pose.pose.position.x and
+                secondMinPathPoint.pose.pose.position.y == local_path.path_points[1].pose.pose.position.y and
+                secondMinPathPoint.pose.pose.position.z == local_path.path_points[1].pose.pose.position.z):
+                # car is before the line
+                quaternion = (minPathPoint.pose.pose.orientation.x,
+                              minPathPoint.pose.pose.orientation.y,
+                              minPathPoint.pose.pose.orientation.z,
+                              minPathPoint.pose.pose.orientation.w)
+                euler = tf.transformations.euler_from_quaternion(quaternion)
+                egoPose = Pose(minPathPoint.pose.pose.position.x,
+                            minPathPoint.pose.pose.position.y,
+                            minPathPoint.pose.pose.position.z,
+                            euler[0],
+                            euler[1],
+                            euler[2])
+                egoSpeed = minPathPoint.velocity.twist
+                return (egoPose, egoSpeed)
+            elif (minPathPoint.pose.pose.position.x == local_path.path_points[len(local_path.path_points)-1].pose.pose.position.x and
+                  minPathPoint.pose.pose.position.y == local_path.path_points[len(local_path.path_points)-1].pose.pose.position.y and
+                  minPathPoint.pose.pose.position.z == local_path.path_points[len(local_path.path_points)-1].pose.pose.position.z and
+                  secondMinPathPoint.pose.pose.position.x == local_path.path_points[len(local_path.path_points)-2].pose.pose.position.x and
+                  secondMinPathPoint.pose.pose.position.y == local_path.path_points[len(local_path.path_points)-2].pose.pose.position.y and
+                  secondMinPathPoint.pose.pose.position.z == local_path.path_points[len(local_path.path_points)-2].pose.pose.position.z):
+                # car is beyond line
+                return (None, None)
+            else:
+                print("[Error][CarlaActor::_egoControlPathWorkaround] Check algorithm, that should not be possible! Going to stand still")
+                return (None, None)
+        elif distance < secondMinDistance:
+            # loop ended. current position is behind local path, go to standstill
+            return (None, None)
+
+        print("sobl")
+        if minDistance == 0.0:
+            quaternion = (minPathPoint.pose.pose.orientation.x,
+                          minPathPoint.pose.pose.orientation.y,
+                          minPathPoint.pose.pose.orientation.z,
+                          minPathPoint.pose.pose.orientation.w)
+            euler = tf.transformations.euler_from_quaternion(quaternion)
+            egoPose = Pose(minPathPoint.pose.pose.position.x,
+                           minPathPoint.pose.pose.position.y,
+                           minPathPoint.pose.pose.position.z,
+                           euler[0],
+                           euler[1],
+                           euler[2])
+            egoSpeed = minPathPoint.velocity.twist
+        else:
+            quaternionFirst = (minPathPoint.pose.pose.orientation.x,
+                               minPathPoint.pose.pose.orientation.y,
+                               minPathPoint.pose.pose.orientation.z,
+                               minPathPoint.pose.pose.orientation.w)
+            quaternionSecond = (secondMinPathPoint.pose.pose.orientation.x,
+                                secondMinPathPoint.pose.pose.orientation.y,
+                                secondMinPathPoint.pose.pose.orientation.z,
+                                secondMinPathPoint.pose.pose.orientation.w)
+            eulerFirst = tf.transformations.euler_from_quaternion(quaternionFirst)
+            eulerSecond = tf.transformations.euler_from_quaternion(quaternionSecond)
+            egoPose = Pose( (minPathPoint.pose.pose.position.x + SecondMinPathPoint.pose.pose.position.x) / 2.0,
+                            (minPathPoint.pose.pose.position.y + SecondMinPathPoint.pose.pose.position.y) / 2.0,
+                            (minPathPoint.pose.pose.position.z + SecondMinPathPoint.pose.pose.position.z) / 2.0,
+                            (eulerFirst[0] + eulerSecond[0]) / 2.0,
+                            (eulerFirst[1] + eulerSecond[1]) / 2.0,
+                            (eulerFirst[2] + eulerSecond[2]) / 2.0)
+            egoSpeed = minPathPoint.velocity.twist
+            egoSpeed.linear.x = (minPathPoint.velocity.twist.linear.x + minPathPoint.velocity.twist.linear.x) / 2.0
+            egoSpeed.linear.y = (minPathPoint.velocity.twist.linear.y + minPathPoint.velocity.twist.linear.y) / 2.0
+            egoSpeed.linear.z = (minPathPoint.velocity.twist.linear.z + minPathPoint.velocity.twist.linear.z) / 2.0
+            egoSpeed.angular.x = (minPathPoint.velocity.twist.angular.x + minPathPoint.velocity.twist.angular.x) / 2.0
+            egoSpeed.angular.y = (minPathPoint.velocity.twist.angular.y + minPathPoint.velocity.twist.angular.y) / 2.0
+            egoSpeed.angular.z = (minPathPoint.velocity.twist.angular.z + minPathPoint.velocity.twist.angular.z) / 2.0
+
+        print("baba")
+        return (egoPose, egoSpeed)
+

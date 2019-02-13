@@ -16,6 +16,7 @@ import rospy
 import threading
 
 from dbw_mkz_msgs.msg import BrakeCmd, GearCmd, SteeringCmd, ThrottleCmd
+from common_msgs.msg import Path
 
 from .singleton import Singleton
 
@@ -69,6 +70,12 @@ class InputController(object, metaclass=Singleton):
                          self.recv_steering_cmd, queue_size=1)
         rospy.Subscriber('/vehicle/throttle_cmd', ThrottleCmd,
                          self.recv_throttle_cmd, queue_size=1)
+
+        # Backup functionality
+        self.local_path = Path()
+        self.lock_local_path = threading.Lock()
+        rospy.Subscriber('/local_path', Path,
+                         self.recv_local_path, queue_size=1)
 
     def get_cur_control(self):
         self.lock_cur_control.acquire()
@@ -141,3 +148,17 @@ class InputController(object, metaclass=Singleton):
             pass
 
         self.lock_cur_control.release()
+
+    def get_local_path(self):
+        self.lock_local_path.acquire()
+
+        local_path = self.local_path
+
+        self.lock_local_path.release()
+
+        return local_path
+    
+    def recv_local_path(self, msg):
+        self.lock_local_path.acquire()
+        self.local_path = msg
+        self.lock_local_path.release()

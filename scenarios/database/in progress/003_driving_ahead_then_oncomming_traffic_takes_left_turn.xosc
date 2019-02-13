@@ -1,0 +1,242 @@
+<?xml version="1.0" encoding="utf-8"?>
+<OpenSCENARIO>
+    
+<FileHeader revMajor="0" revMinor="1" date="2019-02-07T10:00:00" description="Sample Scenario - Car driving ahead and oncomming traffic takes left turn" author="Christoph Pilz"/>
+
+<ParameterDeclaration/>
+
+<Catalogs>
+    <VehicleCatalog>
+        <Directory path="Catalogs/VehicleCatalogs"/>
+    </VehicleCatalog>
+    <DriverCatalog>
+        <Directory path="Catalogs/DriverCatalogs"/>
+    </DriverCatalog>
+    <PedestrianCatalog>
+        <Directory path="Catalogs/ObserverCatalogs"/>
+    </PedestrianCatalog>
+    <PedestrianControllerCatalog>
+        <Directory path="Catalogs/PedestrianCatalogs"/>
+    </PedestrianControllerCatalog>
+    <MiscObjectCatalog>
+        <Directory path="Catalogs/MiscObjectCatalogs"/>
+    </MiscObjectCatalog>
+    <EnvironmentCatalog>
+        <Directory path="Catalogs/EnvironmentCatalogs"/>
+    </EnvironmentCatalog>
+    <ManeuverCatalog>
+        <Directory path="Catalogs/ManeuverCatalogs"/>
+    </ManeuverCatalog>
+    <TrajectoryCatalog>
+        <Directory path="Catalogs/TrajectoryCatalog"/>
+    </TrajectoryCatalog>
+    <RouteCatalog>
+        <Directory path="Catalogs/RoutingCatalog"/>
+    </RouteCatalog>
+</Catalogs>
+
+<RoadNetwork>
+    <Logics filepath="RQ31_130Limit.xodr"/>
+    <SceneGraph filepath=""/>
+</RoadNetwork>
+
+<Entities>
+    <Object name="Ego">
+        <CatalogReference catalogName="VechicleCatalog" entryName="AudiA3_blue_147kW"/>
+        <Controller>
+            <CatalogReference catalogName="DriverCatalog" entryName="HastyDriver"/>
+        </Controller>
+    </Object>
+    <Object name="Target1">
+        <CatalogReference catalogName="VechicleCatalog" entryName="AudiA4_red_147kW"/>
+        <Controller>
+            <CatalogReference catalogName="DriverCatalog" entryName="DefaultDriver"/>
+        </Controller>
+    </Object>
+</Entities>
+
+<Storyboard>
+    <Init>
+        <Actions>
+            <Private object="Ego">
+                <Action>
+                    <Longitudinal>
+                        <Speed>
+                            <Dynamics shape="step" rate="0"/>
+                            <Target>
+                                <Absolute value="50.0"/>
+                            </Target>
+                        </Speed>
+                    </Longitudinal>
+                </Action>
+                <Action>
+                    <Position>
+                        <World x="219.0" y="-5.3" z="0.0" h="-3.1258846903218" p="0" r="0"/>
+                    </Position>
+                </Action>
+            </Private>
+            <Private object="Target1">
+                <Action>
+                    <Longitudinal>
+                        <Speed>
+                            <Dynamics shape="step" rate="0"/>
+                            <Target>
+                                <Absolute value="0.0"/>
+                            </Target>
+                        </Speed>
+                    </Longitudinal>
+                </Action>
+                <Action>
+                    <Position>
+						<World x="142.4759375" y="-2.8523291" z="0.0" h="0.0149368768" p="0" r="0"/>
+                    </Position>
+                </Action>
+            </Private>
+        </Actions>
+    </Init>
+    <Story name="MyStory" owner="Target1">
+        <Act name="MyAct">
+            <Sequence name="Sequence1StartNPC" numberOfExecutions="1">
+                <Actors>
+                    <Entity name="Target1"/>
+                </Actors>
+                <Maneuver name="Maneuver1StartNPC">
+                    <Event name="Event1EgoTriggersNPCStart" priority="overwrite">
+                        <Action name="Action1.1StartNPC">
+                            <Private>
+                                <Longitudinal>
+                                    <Speed>
+                                        <Dynamics shape="step" rate="0.0"/>
+                                        <Target>
+                                            <Absolute value="20.0"/>
+                                        </Target>
+                                    </Speed>
+                                </Longitudinal>
+                            </Private>
+                        </Action>
+                        <StartConditions>
+                            <ConditionGroup>
+                                <Condition name="StartCondition1EgoTriggersStart" delay="0" edge="rising">
+                                    <ByEntity>
+                                        <TriggeringEntities rule="any">
+                                            <Entity name="Ego"/>
+                                        </TriggeringEntities>
+                                        <EntityCondition>
+                                            <ReachPosition tolerance="1.0">
+												<Position>
+													<World x="219.0" y="-5.3" z="0.0" h="-3.1258846903218" p="0" r="0"/>
+												</Position>
+											</ReachPosition>
+                                        </EntityCondition>
+                                    </ByEntity>
+                                </Condition>
+                            </ConditionGroup>
+                        </StartConditions>
+                    </Event>
+                </Maneuver>
+            </Sequence>
+            <Sequence name="Sequence2T1TakeLeftTurn" numberOfExecutions="1">
+                <Actors>
+                    <Entity name="Target1"/>
+                </Actors>
+                <Maneuver name="Maneuver2T1TakeLeftTurn">
+                    <Event name="Event2T1TakeLeftTurn" priority="overwrite">
+                        <Action name="Action2.1T1TakeLeftTurn">
+                            <Private>
+                                <Routing>
+                                    <FollowTrajectory>
+                                        <Trajectory name="LinksKurve1" closed="false" domain="distance">
+                                            <Vertex reference="0.0">
+												<Position><RelativeWorld object="Target1" dx="0.0" dy="0.0" dz="0.0"/></Position>
+												<Shape><Clothoid curvature="-0.1" curvatureDot="0.0" length="15.7079632679"/></Shape>
+											</Vertex>
+                                            <Vertex reference="15.8">
+												<Position><RelativeWorld object="Target1" dx="10.0" dy="-10.0"><Orientation type="relative" h="-1.5707963"/></RelativeWorld></Position>
+												<Shape><Polyline/></Shape>
+											</Vertex>
+                                        </Trajectory>
+                                        <Longitudinal>
+                                            <None/>
+                                        </Longitudinal>
+                                        <Lateral purpose="steering"/>
+                                    </FollowTrajectory>
+                                </Routing>
+                            </Private>
+                        </Action>
+                        <StartConditions>
+                            <ConditionGroup>
+                                <Condition name="StartCondition2T1TakeLeftTurn" delay="0" edge="rising">
+                                    <ByEntity>
+                                        <TriggeringEntities rule="any">
+                                            <Entity name="Target1"/>
+                                        </TriggeringEntities>
+                                        <EntityCondition>
+                                            <ReachPosition tolerance="0.5">
+												<Position>
+													<World x="157.4965625" y="-2.62795715" z="0.0" h="0.0149368768" p="0" r="0"/>
+												</Position>
+											</ReachPosition>
+                                        </EntityCondition>
+                                    </ByEntity>
+                                </Condition>
+                            </ConditionGroup>
+                        </StartConditions>
+                    </Event>
+                </Maneuver>
+            </Sequence>
+            <Sequence name="End" numberOfExecutions="1">
+                <Actors>
+                    <Entity name="Ego"/>
+                </Actors>
+                <Maneuver name="StopAtEnd">
+                    <Event name="PathEndReached" priority="overwrite">
+                        <Action name="Stop">
+                            <Private>
+                                <Longitudinal>
+                                    <Speed>
+                                        <Dynamics shape="step" rate="0.0"/>
+                                        <Target>
+                                            <Absolute value="0.0"/>
+                                        </Target>
+                                    </Speed>
+                                </Longitudinal>
+                            </Private>
+                        </Action>
+                        <StartConditions>
+                            <ConditionGroup>
+                                <Condition name="EndOfPath" delay="0" edge="rising">
+                                    <ByEntity>
+                                        <TriggeringEntities rule="any">
+                                            <Entity name="Ego"/>
+                                        </TriggeringEntities>
+                                        <EntityCondition>
+                                            <ReachPosition tolerance="5.0">
+												<Position>
+													<World x="24.0" y="-8.0" z="0.0" h="-3.1415926" p="0" r="0"/>
+												</Position>
+											</ReachPosition>
+                                        </EntityCondition>
+                                    </ByEntity>
+                                </Condition>
+                            </ConditionGroup>
+                        </StartConditions>
+                    </Event>
+                </Maneuver>
+            </Sequence>
+            <Conditions>
+                <Start>
+                    <ConditionGroup>
+                        <Condition name="StartCondition0" delay="0" edge="rising">
+                            <ByValue>
+                                <SimulationTime value="0" rule="equal_to"/>
+                            </ByValue>
+                        </Condition>
+                    </ConditionGroup>
+                </Start>
+            </Conditions>
+        </Act>
+    </Story>
+    <EndConditions/>
+</Storyboard>
+
+</OpenSCENARIO>

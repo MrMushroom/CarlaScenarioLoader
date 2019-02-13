@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <OpenSCENARIO>
     
-<FileHeader revMajor="0" revMinor="1" date="2019-02-06T16:00:00" description="Sample Scenario - Car driving ahead and slowing down" author="Christoph Pilz"/>
+<FileHeader revMajor="0" revMinor="1" date="2019-02-06T15:00:00" description="Sample Scenario - Straight ahead with side crash" author="Christoph Pilz"/>
 
 <ParameterDeclaration/>
 
