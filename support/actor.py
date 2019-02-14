@@ -9,6 +9,7 @@ import abc
 import carla
 import datetime
 import math
+import os
 import prctl
 import random
 import sys
@@ -336,14 +337,40 @@ class CarlaActor(Actor):
 
         # send data to carla
         # TODO fix PID controller and reimplement vehicle control
-        # carla_vehicle_control = carla.VehicleControl(cur_control["throttle"],
-        #                                              cur_control["steer"],
-        #                                              cur_control["brake"],
-        #                                              cur_control["hand_brake"],
-        #                                              cur_control["reverse"])
-        # self.__carlaActor.apply_control(carla_vehicle_control)
+        carla_vehicle_control = carla.VehicleControl(cur_control["throttle"],
+                                                     cur_control["steer"],
+                                                     cur_control["brake"],
+                                                     cur_control["hand_brake"],
+                                                     cur_control["reverse"])
+        self.__carlaActor.apply_control(carla_vehicle_control)
 
-        (egoPose, egoSpeed) = self._egoControlPathWorkaround()
+        # (egoPose, egoSpeed) = self._egoControlPathWorkaround()
+        # if egoPose is not None:
+        #     # mind ros to carla corrections (-y, -roll, -yaw)
+        #     transform = carla.Transform(carla.Location( egoPose.getPosition()[0],
+        #                                                 -egoPose.getPosition()[1],
+        #                                                 egoPose.getPosition()[2]),
+        #                                 carla.Rotation( math.degrees(egoPose.getOrientation()[1]),
+        #                                                 math.degrees(-egoPose.getOrientation()[2]),
+        #                                                 math.degrees(-egoPose.getOrientation()[0])))
+        #     print("--- --- ---")
+        #     print(egoPose)
+        #     print(self._currentPose)
+        #     print(egoSpeed.linear.x)
+        #     self.__carlaActor.set_transform(transform)
+
+        #     if egoSpeed is not None:
+        #         # mind ros to carla corrections (-y, -roll, -yaw)
+        #         pitch = egoPose.getOrientation()[1]
+        #         yaw = -egoPose.getOrientation()[2]
+        #         speed = egoSpeed.linear.x
+        #         if(speed == 0.0):
+        #             speed = 10.0
+        #         velocity = self.__carlaActor.get_velocity()
+        #         velocity.x = egoSpeed.linear.x * math.cos(yaw) * math.cos(pitch)
+        #         velocity.y = egoSpeed.linear.x * math.sin(yaw) * math.cos(pitch)
+        #         #velocity.z = egoSpeed.linear.x * math.sin(pitch) # dont set, let the vehicle drop
+        #         self.__carlaActor.set_velocity(velocity)
 
         # check if end position reached
         if len(self._events) == 0 and self._desiredSpeed == 0.0 and self._currentSpeed == 0.0:
@@ -435,7 +462,9 @@ class CarlaActor(Actor):
                 self._currentSpeed = math.sqrt(pow(velocity.x, 2.0) + pow(velocity.y, 2.0) + pow(velocity.z, 2.0))
                 self._currentTimeStamp = TimedEventHandler().getCurrentSimTimeStamp()
                 self._previousTimeStamp = TimedEventHandler().getPreviousSimTimeStamp()
-                # print(self._name, self._currentTimeStamp.getFloat(), self._currentPose, self._currentSpeed)
+
+                if(self._previousTimeStamp > self._currentTimeStamp):
+                    raise RuntimeWarning("Jump back in time")
 
                 # handleEvents()
                 self.handleEvents()
@@ -446,6 +475,8 @@ class CarlaActor(Actor):
                 else:
                     self.handleNonEgo()
 
+            except RuntimeWarning as rw:
+                print("[Warning][[CarlaActor::_actorThread]", self._name, rw)
             except:
                 print("[Error][CarlaActor::_actorThread] Unexpected error:", sys.exc_info())
                 self._isRunning = False
@@ -562,7 +593,6 @@ class CarlaActor(Actor):
             # loop ended. current position is behind local path, go to standstill
             return (None, None)
 
-        print("sobl")
         if minDistance == 0.0:
             quaternion = (minPathPoint.pose.pose.orientation.x,
                           minPathPoint.pose.pose.orientation.y,
@@ -587,9 +617,9 @@ class CarlaActor(Actor):
                                 secondMinPathPoint.pose.pose.orientation.w)
             eulerFirst = tf.transformations.euler_from_quaternion(quaternionFirst)
             eulerSecond = tf.transformations.euler_from_quaternion(quaternionSecond)
-            egoPose = Pose( (minPathPoint.pose.pose.position.x + SecondMinPathPoint.pose.pose.position.x) / 2.0,
-                            (minPathPoint.pose.pose.position.y + SecondMinPathPoint.pose.pose.position.y) / 2.0,
-                            (minPathPoint.pose.pose.position.z + SecondMinPathPoint.pose.pose.position.z) / 2.0,
+            egoPose = Pose( (minPathPoint.pose.pose.position.x + secondMinPathPoint.pose.pose.position.x) / 2.0,
+                            (minPathPoint.pose.pose.position.y + secondMinPathPoint.pose.pose.position.y) / 2.0,
+                            (minPathPoint.pose.pose.position.z + secondMinPathPoint.pose.pose.position.z) / 2.0,
                             (eulerFirst[0] + eulerSecond[0]) / 2.0,
                             (eulerFirst[1] + eulerSecond[1]) / 2.0,
                             (eulerFirst[2] + eulerSecond[2]) / 2.0)
@@ -601,6 +631,5 @@ class CarlaActor(Actor):
             egoSpeed.angular.y = (minPathPoint.velocity.twist.angular.y + minPathPoint.velocity.twist.angular.y) / 2.0
             egoSpeed.angular.z = (minPathPoint.velocity.twist.angular.z + minPathPoint.velocity.twist.angular.z) / 2.0
 
-        print("baba")
         return (egoPose, egoSpeed)
 

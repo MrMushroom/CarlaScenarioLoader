@@ -61,24 +61,16 @@ def trajectory(vertices, domain, pose, timestamp, speed):
             v = speed * 1000.0 / 3600
             dt = s / v
 
-            last_pose = pose
-            last_timestamp = timestamp
             distance = 0.0
             for vertex in vertices:
-                if (((vertex.reference - tolerance) < distance) and (distance < (vertex.reference + tolerance))):
+                if vertex.reference >= distance:
                     if vertex.shape == vertex.shapeTags["Clothoid"]:
                         print("[Warning] no check for vertex.relativeObject=", vertex.relativeObject, "Estimate self")
-                        print("[Warning] ignoring vertex.pose=", vertex.pose, "Estimate all 0.0")
-                        print("[Warning] ignoring vertex.positioning=", vertex.positioning, "Estimate relative")
-                        print("[Warning] ignoring vertex.orientation=", vertex.orientation, " for Clothoid")
                         print("[Warning] ignoring vertex.clothoid_curvatureDot=", vertex.clothoid_curvatureDot, "Estimate 0.0")
 
-                        queue += calculatePosesForArc(last_pose, s, last_timestamp, dt, vertex.clothoid_curvature, vertex.clothoid_length)
-                        distance = vertex.clothoid_length
-
-                    elif vertex.shape == vertex.shapeTags["Polyline"]:
-                        print("[Warning] no check for vertex.relativeObject=", vertex.relativeObject, "Estimate self")
-
+                        x = 0.0
+                        y = 0.0
+                        z = 0.0
                         if(vertex.positioning == vertex.positioningTags["absolute"]):
                             x = vertex.pose.getPosition()[0]
                             y = vertex.pose.getPosition()[1]
@@ -87,37 +79,73 @@ def trajectory(vertices, domain, pose, timestamp, speed):
                             x = pose.getPosition()[0] + vertex.pose.getPosition()[0]
                             y = pose.getPosition()[1] + vertex.pose.getPosition()[1]
                             z = pose.getPosition()[2] + vertex.pose.getPosition()[2]
-                        else:
-                            print("[Warning] unknown value for vertex.positioning=", vertex.positioning, "-> will crash")
 
+                        roll = 0.0
+                        pitch = 0.0
+                        yaw = 0.0
                         if(vertex.orientation == vertex.positioningTags["absolute"]):
-                            r = vertex.pose.getOrientation()[0]
-                            p = vertex.pose.getOrientation()[1]
-                            y = vertex.pose.getOrientation()[2]
+                            roll = vertex.pose.getOrientation()[0]
+                            pitch = vertex.pose.getOrientation()[1]
+                            yaw = vertex.pose.getOrientation()[2]
                         elif(vertex.orientation == vertex.positioningTags["relative"]):
-                            r = pose.getOrientation()[0] + vertex.pose.getOrientation()[0]
-                            p = pose.getOrientation()[1] + vertex.pose.getOrientation()[1]
-                            y = pose.getOrientation()[2] + vertex.pose.getOrientation()[2]
-                        else:
-                            print("[Warning] unknown value for vertex.orientation=", vertex.orientation, "-> will crash")
+                            roll = pose.getOrientation()[0] + vertex.pose.getOrientation()[0]
+                            pitch = pose.getOrientation()[1] + vertex.pose.getOrientation()[1]
+                            yaw = pose.getOrientation()[2] + vertex.pose.getOrientation()[2]
 
-                        newPose = Pose(x=x, y=y, z=z, roll=r, pitch=p, yaw=y)
+                        newPose = Pose(x=x, y=y, z=z, roll=roll, pitch=pitch, yaw=yaw)
+                        sec, usec = timestamp.getInt()
+                        dt = vertex.reference / v
+                        newTimestamp = TimeStamp(sec, usec)
+                        newTimestamp.addFloat(dt)
+
+                        queue += calculatePosesForArc(newPose, s, timestamp, dt, vertex.clothoid_curvature, vertex.clothoid_length)
+                        distance = vertex.reference + vertex.clothoid_length
+
+                    elif vertex.shape == vertex.shapeTags["Polyline"]:
+                        print("[Warning] no check for vertex.relativeObject=", vertex.relativeObject, "Estimate self")
+
+                        x = 0.0
+                        y = 0.0
+                        z = 0.0
+                        if(vertex.positioning == vertex.positioningTags["absolute"]):
+                            x = vertex.pose.getPosition()[0]
+                            y = vertex.pose.getPosition()[1]
+                            z = vertex.pose.getPosition()[2]
+                        elif(vertex.positioning == vertex.positioningTags["relative"]):
+                            x = pose.getPosition()[0] + vertex.pose.getPosition()[0]
+                            y = pose.getPosition()[1] + vertex.pose.getPosition()[1]
+                            z = pose.getPosition()[2] + vertex.pose.getPosition()[2]
+
+                        roll = 0.0
+                        pitch = 0.0
+                        yaw = 0.0
+                        if(vertex.orientation == vertex.positioningTags["absolute"]):
+                            roll = vertex.pose.getOrientation()[0]
+                            pitch = vertex.pose.getOrientation()[1]
+                            yaw = vertex.pose.getOrientation()[2]
+                        elif(vertex.orientation == vertex.positioningTags["relative"]):
+                            roll = pose.getOrientation()[0] + vertex.pose.getOrientation()[0]
+                            pitch = pose.getOrientation()[1] + vertex.pose.getOrientation()[1]
+                            yaw = pose.getOrientation()[2] + vertex.pose.getOrientation()[2]
+
+                        newPose = Pose(x=x, y=y, z=z, roll=roll, pitch=pitch, yaw=yaw)
                         sec, usec = timestamp.getInt()
                         dt = vertex.reference / v
                         newTimestamp = TimeStamp(sec, usec)
                         newTimestamp.addFloat(dt)
 
                         queue.append(Action(newPose, newTimestamp))
+                        distance = vertex.reference
 
                     else:
-                        print("[Error][maneuvers::trajectory]: unknown vertex.shape =", vertex.shape)
+                        raise NotImplementedError("[Error][maneuvers::trajectory]: unknown vertex.shape =", vertex.shape)
                 else:
-                    print("[Error][maneuvers::trajectory]: distance != reference missmatch", distance, vertex.reference)
+                    raise ValueError("[Error][maneuvers::trajectory]: reference < distance missmatch", distance, vertex.reference)
 
         else:
-            print("[Error][maneuvers::trajectory]: no trajacetory in standstill")
+            raise ValueError("[Error][maneuvers::trajectory]: no trajacetory in standstill")
     else:
-        print("[Error][maneuvers::trajectory]: unknown domain", domain)
+        raise NotImplementedError("[Error][maneuvers::trajectory]: unknown domain", domain)
 
     return queue
 
