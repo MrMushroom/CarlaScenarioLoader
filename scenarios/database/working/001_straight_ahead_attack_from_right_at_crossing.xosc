@@ -108,7 +108,7 @@
                                     <Speed>
                                         <Dynamics shape="step" rate="0.0"/>
                                         <Target>
-                                            <Absolute value="5.0"/>
+                                            <Absolute value="10.0"/>
                                         </Target>
                                     </Speed>
                                 </Longitudinal>
@@ -124,7 +124,7 @@
                                         <EntityCondition>
                                             <ReachPosition tolerance="1.0">
 												<Position>
-													<World x="167.0" y="-6.0" z="0.1" h="-3.1258846903218" p="0" r="0"/>
+													<World x="180.0" y="-5.7" z="0.1" h="-3.1258846903218" p="0" r="0"/>
 												</Position>
 											</ReachPosition>
                                         </EntityCondition>

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <OpenSCENARIO>
     
-<FileHeader revMajor="0" revMinor="1" date="2019-02-07T09:00:00" description="Sample Scenario - Car driving ahead and slowing down" author="Christoph Pilz"/>
+<FileHeader revMajor="0" revMinor="1" date="2019-02-07T10:00:00" description="Sample Scenario - Car driving ahead and oncomming traffic takes left turn" author="Christoph Pilz"/>
 
 <ParameterDeclaration/>
 
@@ -88,7 +88,7 @@
                 </Action>
                 <Action>
                     <Position>
-						<World x="167.0" y="-6.0" z="0.0" h="-3.1258846903218" p="0" r="0"/>
+						<World x="135.0" y="-2.6" z="0.0" h="0.0149368768" p="0" r="0"/>
                     </Position>
                 </Action>
             </Private>
@@ -108,7 +108,7 @@
                                     <Speed>
                                         <Dynamics shape="step" rate="0.0"/>
                                         <Target>
-                                            <Absolute value="40.0"/>
+                                            <Absolute value="20.0"/>
                                         </Target>
                                     </Speed>
                                 </Longitudinal>
@@ -124,7 +124,7 @@
                                         <EntityCondition>
                                             <ReachPosition tolerance="1.0">
 												<Position>
-													<World x="219.0" y="-5.3" z="0.0" h="-3.1258846903218" p="0" r="0"/>
+													<World x="190.0" y="-5.5" z="0.0" h="-3.1258846903218" p="0" r="0"/>
 												</Position>
 											</ReachPosition>
                                         </EntityCondition>
@@ -135,35 +135,49 @@
                     </Event>
                 </Maneuver>
             </Sequence>
-            <Sequence name="Sequence2DecelerateNPC" numberOfExecutions="1">
+            <Sequence name="Sequence2T1TakeLeftTurn" numberOfExecutions="1">
                 <Actors>
                     <Entity name="Target1"/>
                 </Actors>
-                <Maneuver name="Maneuver2DecelerateNPC">
-                    <Event name="Event2EgoTriggersNPCDeceleration" priority="overwrite">
-                        <Action name="Action2.1DecelerateNPC">
+                <Maneuver name="Maneuver2T1TakeLeftTurn">
+                    <Event name="Event2T1TakeLeftTurn" priority="overwrite">
+                        <Action name="Action2.1T1TakeLeftTurn">
                             <Private>
-                                <Longitudinal>
-                                    <Speed>
-                                        <Dynamics shape="step" rate="0.0"/>
-                                        <Target>
-                                            <Absolute value="20.0"/>
-                                        </Target>
-                                    </Speed>
-                                </Longitudinal>
+                                <Routing>
+                                    <FollowTrajectory>
+                                        <Trajectory name="LinksKurve1" closed="false" domain="distance">
+                                            <Vertex reference="0.0">
+												<Position><RelativeWorld object="Target1" dx="0.0" dy="0.0" dz="0.0"/></Position>
+												<Shape><Clothoid curvature="-0.1" curvatureDot="0.0" length="15.7079632679"/></Shape>
+											</Vertex>
+                                            <Vertex reference="15.8">
+												<Position><RelativeWorld object="Target1" dx="10.0" dy="-10.0"><Orientation type="relative" h="-1.5707963"/></RelativeWorld></Position>
+												<Shape><Polyline/></Shape>
+											</Vertex>
+                                            <Vertex reference="20.8">
+												<Position><RelativeWorld object="Target1" dx="10.0" dy="-15.0"><Orientation type="relative" h="-1.5707963"/></RelativeWorld></Position>
+												<Shape><Polyline/></Shape>
+											</Vertex>
+                                        </Trajectory>
+                                        <Longitudinal>
+                                            <None/>
+                                        </Longitudinal>
+                                        <Lateral purpose="steering"/>
+                                    </FollowTrajectory>
+                                </Routing>
                             </Private>
                         </Action>
                         <StartConditions>
                             <ConditionGroup>
-                                <Condition name="StartCondition2EgoTriggersDeceleration" delay="0" edge="rising">
+                                <Condition name="StartCondition2T1TakeLeftTurn" delay="0" edge="rising">
                                     <ByEntity>
                                         <TriggeringEntities rule="any">
-                                            <Entity name="Ego"/>
+                                            <Entity name="Target1"/>
                                         </TriggeringEntities>
                                         <EntityCondition>
-                                            <ReachPosition tolerance="1.0">
+                                            <ReachPosition tolerance="0.5">
 												<Position>
-													<World x="219.0" y="-5.3" z="0.0" h="-3.1258846903218" p="0" r="0"/>
+													<World x="145.0" y="-2.6" z="0.0" h="0.0149368768" p="0" r="0"/>
 												</Position>
 											</ReachPosition>
                                         </EntityCondition>

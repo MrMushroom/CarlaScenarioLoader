@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <OpenSCENARIO>
     
-<FileHeader revMajor="0" revMinor="1" date="2019-02-06T15:00:00" description="Sample Scenario - Straight ahead with side crash" author="Christoph Pilz"/>
+<FileHeader revMajor="0" revMinor="1" date="2019-02-07T09:00:00" description="Sample Scenario - Car driving ahead and slowing down" author="Christoph Pilz"/>
 
 <ParameterDeclaration/>
 
@@ -64,7 +64,7 @@
                         <Speed>
                             <Dynamics shape="step" rate="0"/>
                             <Target>
-                                <Absolute value="36.1"/>
+                                <Absolute value="50.0"/>
                             </Target>
                         </Speed>
                     </Longitudinal>
@@ -88,7 +88,7 @@
                 </Action>
                 <Action>
                     <Position>
-                        <World x="149.39103516" y="-16.974143066" z="1.0" h="1.58818823608" p="0" r="0"/>
+						<World x="180.0" y="-5.7" z="0.0" h="-3.1258846903218" p="0" r="0"/>
                     </Position>
                 </Action>
             </Private>
@@ -96,19 +96,19 @@
     </Init>
     <Story name="MyStory" owner="Target1">
         <Act name="MyAct">
-            <Sequence name="Sequence1" numberOfExecutions="1">
+            <Sequence name="Sequence1StartNPC" numberOfExecutions="1">
                 <Actors>
                     <Entity name="Target1"/>
                 </Actors>
-                <Maneuver name="Maneuver1">
-                    <Event name="Event1" priority="overwrite">
-                        <Action name="Action1.1">
+                <Maneuver name="Maneuver1StartNPC">
+                    <Event name="Event1EgoTriggersNPCStart" priority="overwrite">
+                        <Action name="Action1.1StartNPC">
                             <Private>
                                 <Longitudinal>
                                     <Speed>
                                         <Dynamics shape="step" rate="0.0"/>
                                         <Target>
-                                            <Absolute value="5.0"/>
+                                            <Absolute value="40.0"/>
                                         </Target>
                                     </Speed>
                                 </Longitudinal>
@@ -116,7 +116,7 @@
                         </Action>
                         <StartConditions>
                             <ConditionGroup>
-                                <Condition name="StartCondition1" delay="0" edge="rising">
+                                <Condition name="StartCondition1EgoTriggersStart" delay="0" edge="rising">
                                     <ByEntity>
                                         <TriggeringEntities rule="any">
                                             <Entity name="Ego"/>
@@ -124,7 +124,46 @@
                                         <EntityCondition>
                                             <ReachPosition tolerance="1.0">
 												<Position>
-													<World x="167.0" y="-6.0" z="0.1" h="-3.1258846903218" p="0" r="0"/>
+													<World x="219.0" y="-5.3" z="0.0" h="-3.1258846903218" p="0" r="0"/>
+												</Position>
+											</ReachPosition>
+                                        </EntityCondition>
+                                    </ByEntity>
+                                </Condition>
+                            </ConditionGroup>
+                        </StartConditions>
+                    </Event>
+                </Maneuver>
+            </Sequence>
+            <Sequence name="Sequence2DecelerateNPC" numberOfExecutions="1">
+                <Actors>
+                    <Entity name="Target1"/>
+                </Actors>
+                <Maneuver name="Maneuver2DecelerateNPC">
+                    <Event name="Event2EgoTriggersNPCDeceleration" priority="overwrite">
+                        <Action name="Action2.1DecelerateNPC">
+                            <Private>
+                                <Longitudinal>
+                                    <Speed>
+                                        <Dynamics shape="step" rate="0.0"/>
+                                        <Target>
+                                            <Absolute value="20.0"/>
+                                        </Target>
+                                    </Speed>
+                                </Longitudinal>
+                            </Private>
+                        </Action>
+                        <StartConditions>
+                            <ConditionGroup>
+                                <Condition name="StartCondition2EgoTriggersDeceleration" delay="0" edge="rising">
+                                    <ByEntity>
+                                        <TriggeringEntities rule="any">
+                                            <Entity name="Ego"/>
+                                        </TriggeringEntities>
+                                        <EntityCondition>
+                                            <ReachPosition tolerance="1.0">
+												<Position>
+													<World x="219.0" y="-5.3" z="0.0" h="-3.1258846903218" p="0" r="0"/>
 												</Position>
 											</ReachPosition>
                                         </EntityCondition>
