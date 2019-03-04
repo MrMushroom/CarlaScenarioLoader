@@ -1,3 +1,10 @@
+#!/usr/bin/env python
+
+# Copyright (c) 2018 Christoph Pilz
+#
+# This work is licensed under the terms of the MIT license.
+# For a copy, see <https://opensource.org/licenses/MIT>.
+
 """
 Classes to handle Agent object (player and non-player)
 Inspired by carla_ros_bridge Carla 0.8.4

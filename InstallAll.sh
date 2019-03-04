@@ -1,4 +1,10 @@
 #!/bin/bash
+
+# Copyright (c) 2018 Christoph Pilz
+#
+# This work is licensed under the terms of the MIT license.
+# For a copy, see <https://opensource.org/licenses/MIT>.
+
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[0;33m'

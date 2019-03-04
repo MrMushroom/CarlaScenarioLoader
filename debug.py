@@ -1,10 +1,15 @@
 #!/usr/bin/env python
 
+# Copyright (c) 2018 Christoph Pilz
+#
+# This work is licensed under the terms of the MIT license.
+# For a copy, see <https://opensource.org/licenses/MIT>.
+
 import carla
 import time
 import pprint
 
-ipAddress = "172.20.1.75"
+ipAddress = "172.20.1.43"
 killCount = 0
 
 def main():
