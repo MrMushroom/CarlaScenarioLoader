@@ -9,7 +9,7 @@ import carla
 import time
 import pprint
 
-ipAddress = "172.20.1.43"
+ipAddress = "172.20.0.207"
 killCount = 0
 
 def main():
@@ -39,6 +39,7 @@ def main():
         print("2 ... display actors")
         print("3 ... actor kill menu")
         print("4 ... actor pose menu")
+        print("5 ... toggle sync")
 
         selection = input("Selection: ")
         print("--- --- ---")
@@ -62,6 +63,12 @@ def main():
             killMenu(actors)
         elif s == 4:
             poseMenu(actors)
+        elif s == 5:
+            settings = world.get_settings()
+            print("synchronous_mode was", settings.synchronous_mode)
+            settings.synchronous_mode = not settings.synchronous_mode
+            world.apply_settings(settings)
+            print("synchronous_mode is", settings.synchronous_mode)
         else:
             print("")
             continue
