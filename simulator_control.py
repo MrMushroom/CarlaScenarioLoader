@@ -70,6 +70,10 @@ class CarlaSimulatorControl(SimulatorControl):
             prctl.set_name("burn")
             self._client.set_timeout(self._simTimeout)
             print("[INFO] Connecting", self._client.get_client_version(), "to", self._client.get_server_version())
+            settings = self._client.get_world().get_settings()
+            settings.synchronous_mode = True
+            self._client.get_world().apply_settings(settings)
+            print("[INFO] Applied Settings: %r", settings)
             self._isConnected = True
             self.run()
             return True
@@ -102,3 +106,8 @@ class CarlaSimulatorControl(SimulatorControl):
         if isRunning:
             TimedEventHandler().updateSimStep(timestamp)
             ClockHandler().process()
+        else:
+            pass
+
+        TimedEventHandler().syncBarrier()
+        self._client.get_world().tick()

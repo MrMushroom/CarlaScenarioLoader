@@ -310,9 +310,9 @@ class CarlaActor(Actor):
         return len(self._executionQueue)
 
     def handleEgo(self):
-        # send data to ROS
+        # send data to ROS - going to be obsolete due to updated RosBridge
         MondeoPlayerAgentHandler().process(self.__carlaActor)
-        MondeoPlayerAgentHandler().processGodSensor(self.__carlaActor)
+        #MondeoPlayerAgentHandler().processGodSensor(self.__carlaActor)
 
         # receive data from ROS
         if self.__inputController is None:

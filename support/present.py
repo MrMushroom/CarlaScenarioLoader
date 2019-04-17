@@ -267,6 +267,7 @@ class MondeoPlayerAgentHandler(metaclass=Singleton):
         source = String(data="sim_carla")
 
         # --- --- Filter Data Semantically --- ---
+        print("[CRITICAL][MondeoPlayerAgentHandler::processGodSensor] actor.semantic_tags crashes")
         vehicles = [(actor.id, actor)
                     for actor in carla_actor.get_world().get_actors() if SemanticCarlaTags().get("Vehicles") in actor.semantic_tags and actor.id != carla_actor.id]
         pedestrians = [(actor.id, actor)

@@ -17,7 +17,7 @@ class TimedEventHandler(metaclass=Singleton):
         self.__previousSimTime = None
         self.__events = None
         self.__subscribers = {}
-        self.__syncBarrier = Barrier(0)
+        self.__syncBarrier = Barrier(1) # (1): Simulator Control Blocks too
         self.__syncLock = Lock()
         self.__cleared = True
 
