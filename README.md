@@ -1,5 +1,12 @@
+
 # CarlaScenarioLoader
 A scenario loader for the automotive simulator Carla 0.9.5. Loads scenarios based on OpenScenario 0.9.1.
+
+![Evaluation Scenarios][eval_scenarios]
+
+![Carla Top Down][carla_top_down]
+[eval_scenarios]: https://raw.githubusercontent.com/MrMushroom/CarlaScenarioLoader/master/doc/figures/evaluationScenarios.png "Evaluation Scenarios"
+[carla_top_down]: https://raw.githubusercontent.com/MrMushroom/CarlaScenarioLoader/master/doc/figures/CarlaTopDown.png "Carla within the Unreal Editor"
 
 This work was created as proof of concept within my Master Thesis at the University of Technology Graz for the Virtual Vehicle Competence Center.
 This system combines the Carla Simulator v0.9.5 with OpenScenario v0.9.1 and has a Dataspeed Drive-By-Wire connection to an ego-vehicle
