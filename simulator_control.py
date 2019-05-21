@@ -87,6 +87,12 @@ class CarlaSimulatorControl(SimulatorControl):
         self._statusLock.acquire()
         self._isRunning = False
         self._isConnected = False
+
+        #switch back syncmode settings
+        settings = self._client.get_world().get_settings()
+        settings.synchronous_mode = False
+        self._client.get_world().apply_settings(settings)
+
         self._client = None
         self._statusLock.release()
 
@@ -109,5 +115,9 @@ class CarlaSimulatorControl(SimulatorControl):
         else:
             pass
 
-        TimedEventHandler().syncBarrier()
+        try:
+            TimedEventHandler().syncBarrier()
+        except threading.BrokenBarrierError:
+            return  # will happen at program end
+
         self._client.get_world().tick()

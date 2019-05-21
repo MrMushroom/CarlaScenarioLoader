@@ -86,6 +86,7 @@ class TestControl():
 
         # setup timedEventHandler
         print("# start timedEventHandler - skipped events")
+        TimedEventHandler().start()
 
         return True
 
@@ -117,7 +118,7 @@ class TestControl():
             isTestWithoutCollision = True
             for actor in self.__actors:
                 if actor.collisionEvent is not None:
-                    print(actor.getName(), "crashed with", actor.collisionEvent)
+                    print(actor.getName(), "crashed with", actor.collisionEvent, "at", actor.collisionEvent.actor.get_transform())
                     isTestWithoutCollision = False
 
             if isTestWithoutCollision:
@@ -140,7 +141,8 @@ class TestControl():
 
     def cleanupTest(self):
         # cleanup timedEventHandler
-        print("# cleanup timedEventHandler - skipped (waiting for sync mode)")
+        print("# cleanup timedEventHandler")
+        TimedEventHandler().cleanup()
 
         # cleanup actors
         print("# cleanup actors")

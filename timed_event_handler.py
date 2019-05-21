@@ -5,7 +5,10 @@
 # This work is licensed under the terms of the MIT license.
 # For a copy, see <https://opensource.org/licenses/MIT>.
 
+import time
+
 from threading import Barrier, Lock
+from threading import BrokenBarrierError
 
 from support.singleton import Singleton
 from support.util import TimeStamp
@@ -19,7 +22,12 @@ class TimedEventHandler(metaclass=Singleton):
         self.__subscribers = {}
         self.__syncBarrier = Barrier(1) # (1): Simulator Control Blocks too
         self.__syncLock = Lock()
+        self.__isStarted = False
         self.__cleared = True
+
+    def cleanup(self):
+        self.__syncLock.acquire()
+        self.__syncLock.release()
 
     def clear(self):
         self.__init__()
@@ -60,6 +68,11 @@ class TimedEventHandler(metaclass=Singleton):
         self.__notify()
         self.__syncLock.release()
 
+    def start(self):
+        self.__syncLock.acquire()
+        self.__isStarted = True
+        self.__syncLock.release()
+
     def stop(self):
         self.__syncLock.acquire()
         self.__syncBarrier.abort()
@@ -78,11 +91,19 @@ class TimedEventHandler(metaclass=Singleton):
         self.__syncLock.release()
 
     def syncBarrier(self):
-        self.__syncBarrier.wait(timeout=1.0)
+        self.__syncLock.acquire()
+        started = self.__isStarted
+        self.__syncLock.release()
+
+        if self.__isStarted:
+            self.__syncBarrier.wait(timeout=1.0)
+        else:
+            pass
+            
 
     def unsubscribe(self, name):
         self.__syncLock.acquire()
-        if self.__syncBarrier.n_waiting != 0:
+        if self.__syncBarrier.n_waiting != 0 and not self.__syncBarrier.broken:
             raise Exception(name, "tried to unsubscribe during runtime (syncBarrier has", self.__syncBarrier.n_waiting, "threads waiting)")
         del self.__subscribers[name]
         self.__syncBarrier = Barrier(self.__syncBarrier.parties - 1)
