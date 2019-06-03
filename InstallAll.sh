@@ -62,16 +62,16 @@ else
   echo -e "${LIGHT_GREEN}[INFO] ~/UnrealEngine_4.21 already exists. Delete for reinstall${NC}"
 fi
 
-echo -e "${GREEN}[INFO] Install carla 0.9.3${NC}"
+echo -e "${GREEN}[INFO] Install carla 0.9.5${NC}"
 if [ ! -d ~/carla ]; then
   cd ~/
   git clone https://github.com/carla-simulator/carla.git
   cd ~/carla
-  git checkout 0.9.3
+  git checkout 0.9.5
   ./Update.sh
   export UE4_ROOT=~/UnrealEngine_4.21
   make CarlaUE4Editor
-  echo -e "${LIGHT_GREEN}[INFO] Install carla 0.9.3 - Done${NC}"
+  echo -e "${LIGHT_GREEN}[INFO] Install carla 0.9.5 - Done${NC}"
 else
   echo -e "${LIGHT_GREEN}[INFO] ~/carla already exists. Delete for reinstall${NC}"
 fi
