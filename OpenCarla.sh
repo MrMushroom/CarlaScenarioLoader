@@ -6,4 +6,4 @@
 # For a copy, see <https://opensource.org/licenses/MIT>.
 #Add UE4_ROOT=~/UnrealEngine_4.19 to your ~/.bashrc for manual execution
 cd ~/carla
-UE4_ROOT=~/UnrealEngine_4.19 make launch-only
+UE4_ROOT=~/UnrealEngine_4.21 make launch-only
